@@ -1,0 +1,257 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ChengxiaoA.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="380" d:DesignHeight="700"
+             x:Class="ChengxiaoA.Views.MainView"
+             FontFamily="Noto Sans CJK,Roboto,Droid Sans Fallback,sans-serif">
+    <ScrollViewer>
+        <StackPanel Margin="10" Spacing="8">
+
+            <!-- 标题（放在Border里以确保中文正常显示） -->
+            <Border Background="Transparent" Padding="12,0,12,10">
+                <TextBlock Text="成效计算器" FontSize="24"  HorizontalAlignment="Center" Foreground="#2E7D32" Name="titleTextBlock"/>
+            </Border>
+
+            <!-- 输入区域 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="📊 数据输入" FontSize="16"  Foreground="#555"/>
+
+                    <!-- 行动 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="行动值" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="txtX" TextAlignment="Center" Height="45" FontSize="18" Background="#FFDFEADB" Watermark="输入行动值"/>
+                    </StackPanel>
+
+                    <!-- 思考 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="思考值" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="txtY" TextAlignment="Center" Height="45" FontSize="18" Background="#FFDFEADB" Watermark="输入思考值"/>
+                    </StackPanel>
+
+                    <!-- 结果比例 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="结果比例" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="txtZ" TextAlignment="Center" Height="45" FontSize="18" Background="#FFDFEADB" Watermark="输入比例"/>
+                    </StackPanel>
+
+                    <!-- 娱乐时间 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="娱乐时间" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="txtYleshijian" TextAlignment="Center" Height="45" FontSize="18" Background="#FFDFEADB" Watermark="输入娱乐时间"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 计算按钮（放在Border里以确保中文正常显示） -->
+            <Border Background="Transparent" Padding="0">
+                <Button Name="btnCalculate" Content=" 计算成效" Height="55" FontSize="18" 
+                        Click="BtnCalculate_Click" Background="#4CAF50" Foreground="White" CornerRadius="8"/>
+            </Border>
+
+            <!-- 结果区域 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="📈 计算结果" FontSize="16"  Foreground="#666"/>
+
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="成效输出" FontSize="14" Foreground="#555"/>
+                            <TextBox Name="txtResult" TextAlignment="Center" Height="45" FontSize="18"
+                                     IsReadOnly="True" Background="#F5F5F5" Watermark="计算结果"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="娱乐计算" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
+                            <Button Name="Yulebutton" Content="娱乐计算" Height="45" FontSize="14"
+                                    Click="Yulebutton_Click" Background="#8BC34A" Foreground="White" CornerRadius="6" Margin="5,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBox Name="txtYule" TextAlignment="Center" Height="45" FontSize="18"
+                             IsReadOnly="True" Background="#F5F5F5" Watermark="娱乐结果"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 累计按钮（放在Border里以确保中文正常显示） -->
+            <Border Background="Transparent" Padding="0">
+                <Grid ColumnDefinitions="*,*">
+                    <Button Name="btnAccumulate" Grid.Column="0" Content="➕ 成效累计" Height="50" FontSize="16"
+                            Click="BtnAccumulate_Click" Background="#66BB6A" Foreground="White" CornerRadius="8" Margin="0,0,4,0" IsEnabled="False"/>
+                    <Button Name="Yuleleijibutton" Grid.Column="1" Content="➕ 娱乐累计" Height="50" FontSize="16"
+                            Click="Yuleleijibutton_Click" Background="#66BB6A" Foreground="White" CornerRadius="8" Margin="4,0,0,0" IsEnabled="False"/>
+                </Grid>
+            </Border>
+
+            <!-- 累计结果 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="成效累计" FontSize="14" Foreground="#666"/>
+                            <TextBox Name="txtTotal" TextAlignment="Center" Height="45" FontSize="18"
+                                     IsReadOnly="True" Background="#F5F5F5" Watermark="累计成效"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="娱乐累计" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
+                            <TextBox Name="txtleijiYule" TextAlignment="Center" Height="45" FontSize="18"
+                                     IsReadOnly="True" Background="#F5F5F5" Watermark="累计娱乐"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 多余积累（放在Border里以确保中文正常显示） -->
+            <Border Background="Transparent" Padding="0">
+                <Button Name="Duoyujileibutton" Content="📊 多余积累计算" Height="50" FontSize="16"
+                        Click="Duoyujilei_Click" Background="#81C784" Foreground="White" CornerRadius="8"/>
+            </Border>
+            <TextBox Name="txtDuoyuleiji" TextAlignment="Center" Height="45" FontSize="18"
+                     IsReadOnly="True" Background="#F5F5F5" Watermark="多余积累结果"/>
+
+            <!-- 水灌效果 - 成效 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="💧 成效水灌" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
+                    <Grid Height="180" VerticalAlignment="Center">
+                        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="200" Height="180" HorizontalAlignment="Center">
+                            <Grid>
+                                <Grid x:Name="waterContainer" Height="180" VerticalAlignment="Bottom" ClipToBounds="True">
+                                    <Border x:Name="waterFill" Height="0" VerticalAlignment="Bottom" CornerRadius="5,5,0,0">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#800080" Offset="0"/>
+                                                <GradientStop Color="Red" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <Canvas x:Name="waveCanvas" Height="10" VerticalAlignment="Bottom">
+                                        <Path x:Name="wavePath" Fill="White" Opacity="0.3"
+                                              Data="M0,10 C20,0 40,10 60,0 C80,10 100,0 120,10 C140,0 160,10 180,0 C200,10 220,0 240,10 L240,20 L0,20 L0,10"/>
+                                    </Canvas>
+                                </Grid>
+                                <!-- 刻度标签 -->
+                                <StackPanel HorizontalAlignment="Left" Margin="5,0,0,0" Spacing="30">
+                                    <TextBlock Text="520" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="390" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="260" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="130" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="0" FontSize="10" Foreground="#666"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 水灌效果 - 娱乐 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="💧 娱乐水灌" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
+                    <Grid Height="180" VerticalAlignment="Center">
+                        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="200" Height="180" HorizontalAlignment="Center">
+                            <Grid>
+                                <Grid x:Name="waterContainer2" Height="180" VerticalAlignment="Bottom" ClipToBounds="True">
+                                    <Border x:Name="waterFill2" Height="0" VerticalAlignment="Bottom" CornerRadius="5,5,0,0">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#800080" Offset="0"/>
+                                                <GradientStop Color="Red" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <Canvas x:Name="waveCanvas2" Height="10" VerticalAlignment="Bottom">
+                                        <Path x:Name="wavePath2" Fill="White" Opacity="0.3"
+                                              Data="M0,10 C20,0 40,10 60,0 C80,10 100,0 120,10 C140,0 160,10 180,0 C200,10 220,0 240,10 L240,20 L0,20 L0,10"/>
+                                    </Canvas>
+                                </Grid>
+                                <StackPanel HorizontalAlignment="Left" Margin="5,0,0,0" Spacing="30">
+                                    <TextBlock Text="520" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="390" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="260" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="130" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="0" FontSize="10" Foreground="#666"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 水灌效果 - 多余积累 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="💧 多余积累水灌" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
+                    <Grid Height="180" VerticalAlignment="Center">
+                        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="200" Height="180" HorizontalAlignment="Center">
+                            <Grid>
+                                <Grid x:Name="waterContainer1" Height="180" VerticalAlignment="Bottom" ClipToBounds="True">
+                                    <Border x:Name="waterFill1" Height="0" VerticalAlignment="Bottom" CornerRadius="5,5,0,0">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#800080" Offset="0"/>
+                                                <GradientStop Color="Red" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+                                    <Canvas x:Name="waveCanvas1" Height="10" VerticalAlignment="Bottom">
+                                        <Path x:Name="wavePath1" Fill="White" Opacity="0.3"
+                                              Data="M0,10 C20,0 40,10 60,0 C80,10 100,0 120,10 C140,0 160,10 180,0 C200,10 220,0 240,10 L240,20 L0,20 L0,10"/>
+                                    </Canvas>
+                                </Grid>
+                                <StackPanel HorizontalAlignment="Left" Margin="5,0,0,0" Spacing="30">
+                                    <TextBlock Text="520" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="390" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="260" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="130" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="0" FontSize="10" Foreground="#666"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 学习总累计 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="📚 学习总累计" FontSize="16"  Foreground="#555"/>
+                    <Grid ColumnDefinitions="*,2*">
+                        <Button Name="Zongjilei" Grid.Column="0" Content="打开" Height="45" FontSize="14"
+                                Click="Zongjilei_Click" Background="#90A4AE" Foreground="White" CornerRadius="6" Margin="0,0,4,0"/>
+                        <Button Name="ZongjileiJisuan_" Grid.Column="1" Content="累计计算" Height="45" FontSize="14"
+                                Click="ZongjileiJisuan_Click" Background="#78909C" Foreground="White" CornerRadius="6" Margin="4,0,0,0"/>
+                    </Grid>
+                    <TextBox Name="txtXuexizongjilei" TextAlignment="Center" Height="45" FontSize="18"
+                             IsReadOnly="True" Background="#F5F5F5" Watermark="学习总累计"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 功能按钮区 -->
+            <Border Background="White" CornerRadius="8" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="⚙️ 功能操作" FontSize="16"  Foreground="#555"/>
+                    <Grid ColumnDefinitions="*,*">
+                        <Button Name="Baocun_" Grid.Column="0" Content="💾 保存" Height="50" FontSize="15"
+                                Click="Baocun_Click" Background="#4DB6AC" Foreground="White" CornerRadius="8" Margin="0,0,4,0"/>
+                        <Button Name="Jiazai_" Grid.Column="1" Content="📂 加载" Height="50" FontSize="15"
+                                Click="Jiazai_Click" Background="#4DB6AC" Foreground="White" CornerRadius="8" Margin="4,0,0,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*,*">
+                        <Button Name="Mubiao" Grid.Column="0" Content="🎯 目标" Height="50" FontSize="14"
+                                Click="Mubiaodakai_Click" Background="#81C784" Foreground="White" CornerRadius="8" Margin="0,0,4,0"/>
+                        <Button Name="Shuaxin" Grid.Column="1" Content="🔄 刷新" Height="50" FontSize="14"
+                                Click="Shuaxin_Click" Background="#81C784" Foreground="White" CornerRadius="8" Margin="2,0,2,0"/>
+                        <Button Name="Huanzhai" Grid.Column="2" Content="🔖 还债" Height="50" FontSize="14"
+                                Click="Huanzhai_Click" Background="#FFF59D" Foreground="#333" CornerRadius="8" Margin="4,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部留白 -->
+            <Border Height="20"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

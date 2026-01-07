@@ -1,0 +1,33 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- TextBlock 中文字体 -->
+    <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource CustomChineseFont}" />
+    </Style>
+
+    <!-- Button 中文字体 -->
+    <Style Selector="Button">
+        <Setter Property="FontFamily" Value="{DynamicResource CustomChineseFont}" />
+    </Style>
+
+    <!-- TextBox 中文字体 -->
+    <Style Selector="TextBox">
+        <Setter Property="FontFamily" Value="{DynamicResource CustomChineseFont}" />
+    </Style>
+
+    <!-- CheckBox 中文字体 -->
+    <Style Selector="CheckBox">
+        <Setter Property="FontFamily" Value="{DynamicResource CustomChineseFont}" />
+    </Style>
+
+    <!-- RadioButton 中文字体 -->
+    <Style Selector="RadioButton">
+        <Setter Property="FontFamily" Value="{DynamicResource CustomChineseFont}" />
+    </Style>
+
+    <!-- Label 中文字体 -->
+    <Style Selector="Label">
+        <Setter Property="FontFamily" Value="{DynamicResource CustomChineseFont}" />
+    </Style>
+</Styles>

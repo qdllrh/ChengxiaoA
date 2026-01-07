@@ -1,0 +1,49 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:ChengxiaoA"
+             x:Class="ChengxiaoA.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <!-- 中文字体资源在 App.axaml.cs 中根据平台动态设置 -->
+    </Application.Resources>
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- 强制全局字体 - 必须在 FluentTheme 之后才能覆盖 -->
+        <!-- 直接使用字体名称，不通过 DynamicResource，更可靠 -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+        <Style Selector="Label">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+
+        <!-- Button 内部的 ContentPresenter 也要设置字体 -->
+        <Style Selector="Button ContentPresenter">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+
+        <!-- Border 内的所有 TextBlock 强制设置字体 -->
+        <Style Selector="Border TextBlock">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+        <Style Selector="Border Button">
+            <Setter Property="FontFamily" Value="SimHei,Microsoft YaHei,Arial,sans-serif" />
+        </Style>
+
+        <StyleInclude Source="avares://ChengxiaoA/Styles/App.axaml" />
+    </Application.Styles>
+</Application>
