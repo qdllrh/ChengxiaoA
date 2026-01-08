@@ -6,6 +6,7 @@ using ChengxiaoA.Services;
 using System;
 using System.IO;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using NPOI.SS.UserModel;
 using NPOI.HSSF.UserModel;
@@ -63,9 +64,10 @@ public partial class MainView : UserControl
 
         try
         {
+            Debug.WriteLine("准备调用 PickExcelFileAsync...");
             // 调用平台特定的文件选择器
             string excelFilePath = await PickExcelFileAsync();
-           
+
             Debug.WriteLine($"默认 Excel 路径: {excelFilePath}");
             //Debug.WriteLine($"文件存在: {File.Exists(excelFilePath)}");
             Debug.WriteLine($"文件存在: {excelFilePath}");
@@ -399,40 +401,80 @@ public partial class MainView : UserControl
     // 平台特定的文件选择器
     private async Task<string> PickExcelFileAsync()
     {
-#if ANDROID
-        // Android 平台：使用存储访问框架
-        return await FilePickerService.PickExcelFileAsync();
-#else
-        // 其他平台：使用存储文件对话框
-        // 获取 TopLevel 对象
-        var topLevel = TopLevel.GetTopLevel(this);
-        var storageProvider = topLevel?.StorageProvider;
+        Debug.WriteLine("========== PickExcelFileAsync (MainView) 开始 ==========");
 
-        if (storageProvider == null)
-            return string.Empty;
+        // 运行时判断平台 - 尝试多种检测方式
+        bool isAndroid = false;
 
-        var file = await storageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        // 方法1: 检查 Android 类型
+        try
         {
-            Title = "选择Excel文件",
-            AllowMultiple = false,
-            FileTypeFilter = new[]
-            {
-                new Avalonia.Platform.Storage.FilePickerFileType("Excel文件")
-                {
-                    Patterns = new[] { "*.xls", "*.xlsx" },
-                    AppleUniformTypeIdentifiers = new[] { "com.microsoft.excel.xls" },
-                    MimeTypes = new[] { "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
-                },
-                new Avalonia.Platform.Storage.FilePickerFileType("所有文件")
-                {
-                    Patterns = new[] { "*.*" }
-                }
-            }
-        });
+            isAndroid = System.Type.GetType("Android.App.Activity", false) != null;
+        }
+        catch { }
 
-        // Avalonia 11.x 中使用 Path.AbsolutePath 而不是 TryGetLocalPath()
-        return file.Count > 0 ? file[0].Path.AbsolutePath : string.Empty;
-#endif
+        // 方法2: 如果方法1失败，检查操作系统描述符
+        if (!isAndroid)
+        {
+            try
+            {
+                var osPlatform = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
+                isAndroid = osPlatform.Contains("Android", System.StringComparison.OrdinalIgnoreCase);
+            }
+            catch { }
+        }
+
+        // 方法3: 检查应用是否运行在 Mono.Android 环境
+        if (!isAndroid)
+        {
+            try
+            {
+                isAndroid = System.Type.GetType("Mono.Android.Runtime", false) != null;
+            }
+            catch { }
+        }
+
+        Debug.WriteLine($"平台检测结果: {(isAndroid ? "Android" : "非Android")}");
+
+        if (isAndroid)
+        {
+            Debug.WriteLine("✅ 检测到 Android 平台，调用 FilePickerService.PickExcelFileAsync()");
+            // Android 平台：使用存储访问框架
+            return await FilePickerService.PickExcelFileAsync();
+        }
+        else
+        {
+            Debug.WriteLine("❌ 非 Android 平台，使用默认文件选择器");
+            // 其他平台：使用存储文件对话框
+            // 获取 TopLevel 对象
+            var topLevel = TopLevel.GetTopLevel(this);
+            var storageProvider = topLevel?.StorageProvider;
+
+            if (storageProvider == null)
+                return string.Empty;
+
+            var file = await storageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "选择Excel文件",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("Excel文件")
+                    {
+                        Patterns = new[] { "*.xls", "*.xlsx" },
+                        AppleUniformTypeIdentifiers = new[] { "com.microsoft.excel.xls" },
+                        MimeTypes = new[] { "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+                    },
+                    new Avalonia.Platform.Storage.FilePickerFileType("所有文件")
+                    {
+                        Patterns = new[] { "*.*" }
+                    }
+                }
+            });
+
+            // Avalonia 11.x 中使用 Path.AbsolutePath 而不是 TryGetLocalPath()
+            return file.Count > 0 ? file[0].Path.AbsolutePath : string.Empty;
+        }
     }
 
     private void ZongjileiJisuan_Click(object? sender, RoutedEventArgs e)
@@ -752,34 +794,54 @@ public partial class MainView : UserControl
 
     #region Excel 文件操作
 
-    // 读取 Excel 第一个单元格的数字
+    // 读取 Excel 第一个单元格的数字（完全复用场景 1 的解析逻辑）
     private double ReadFirstCellNumber(string filePath)
     {
-        IWorkbook workbook = null; // 先定义为null，方便后续释放
+        Debug.WriteLine($"========== ReadFirstCellNumber 开始 ==========");
+        Debug.WriteLine($"文件路径: {filePath}");
+
+        IWorkbook workbook = null;
+        FileStream? fileStream = null;
 
         try
         {
-            // 根据文件扩展名，使用不同的类打开工作簿
-            using (FileStream file = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            // 检查文件是否存在
+            if (!File.Exists(filePath))
             {
-                if (System.IO.Path.GetExtension(filePath).ToLower() == ".xls")
-                {
-                    workbook = new HSSFWorkbook(file);
-                }
-                else
-                {
-                    workbook = new XSSFWorkbook(file);
-                }
+                Debug.WriteLine("❌ 文件不存在");
+                return 0;
             }
+
+            // 根据文件扩展名，使用不同的类打开工作簿
+            fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            string extension = Path.GetExtension(filePath).ToLower();
+            Debug.WriteLine($"文件扩展名: {extension}");
+
+            if (extension == ".xls")
+            {
+                workbook = new HSSFWorkbook(fileStream);
+            }
+            else if (extension == ".xlsx")
+            {
+                workbook = new XSSFWorkbook(fileStream);
+            }
+            else
+            {
+                Debug.WriteLine($"❌ 不支持的文件格式: {extension}");
+                return 0;
+            }
+
+            Debug.WriteLine("✅ 工作簿创建成功");
 
             // 获取第一个工作表
             ISheet sheet = workbook.GetSheetAt(0);
+            Debug.WriteLine($"✅ 获取工作表: {sheet.SheetName}");
 
             // 获取第一行，如果第一行不存在则返回0
             IRow row = sheet.GetRow(0);
             if (row == null)
             {
-                Debug.WriteLine("第一行不存在");
+                Debug.WriteLine("⚠️ 第一行不存在");
                 return 0;
             }
 
@@ -787,9 +849,11 @@ public partial class MainView : UserControl
             ICell cell = row.GetCell(0);
             if (cell == null)
             {
-                Debug.WriteLine("第一个单元格不存在");
+                Debug.WriteLine("⚠️ 第一个单元格不存在");
                 return 0;
             }
+
+            Debug.WriteLine($"单元格类型: {cell.CellType}");
 
             // 根据单元格类型获取值
             double value = 0;
@@ -797,54 +861,68 @@ public partial class MainView : UserControl
             {
                 case CellType.Numeric:
                     value = cell.NumericCellValue;
-                    Debug.WriteLine($"读取到数值: {value}");
+                    Debug.WriteLine($"✅ 读取到数值: {value}");
                     break;
                 case CellType.String:
                     // 尝试将字符串转换为数字
                     if (double.TryParse(cell.StringCellValue, out double num))
                     {
                         value = num;
-                        Debug.WriteLine($"读取到字符串数值: {value}");
+                        Debug.WriteLine($"✅ 读取到字符串数值: {value}");
                     }
                     else
                     {
-                        throw new Exception("第一个单元格不是有效的数字。");
+                        throw new Exception($"第一个单元格不是有效的数字: {cell.StringCellValue}");
                     }
                     break;
                 case CellType.Formula:
-                    // 公式单元格，我们需要计算值，但这里简单处理：如果是数字公式，则获取计算后的值
+                    // 公式单元格，获取计算后的值
                     if (cell.CachedFormulaResultType == CellType.Numeric)
                     {
                         value = cell.NumericCellValue;
-                        Debug.WriteLine($"读取到公式数值: {value}");
+                        Debug.WriteLine($"✅ 读取到公式数值: {value}");
                     }
                     else if (cell.CachedFormulaResultType == CellType.String)
                     {
                         if (double.TryParse(cell.StringCellValue, out double num2))
                         {
                             value = num2;
-                            Debug.WriteLine($"读取到公式字符串数值: {value}");
+                            Debug.WriteLine($"✅ 读取到公式字符串数值: {value}");
                         }
                         else
                         {
-                            throw new Exception("第一个单元格公式结果不是有效的数字。");
+                            throw new Exception($"第一个单元格公式结果不是有效的数字: {cell.StringCellValue}");
                         }
                     }
                     else
                     {
-                        throw new Exception("第一个单元格公式结果不是数字。");
+                        throw new Exception($"第一个单元格公式结果类型不支持: {cell.CachedFormulaResultType}");
                     }
                     break;
+                case CellType.Blank:
+                    Debug.WriteLine("⚠️ 第一个单元格为空");
+                    return 0;
                 default:
-                    throw new Exception("第一个单元格不是数字类型。");
+                    throw new Exception($"第一个单元格类型不支持: {cell.CellType}");
             }
 
             return value;
         }
-        finally // 关键：无论是否报错，都强制释放workbook资源
+        catch (Exception ex)
         {
-            workbook?.Close(); // 关闭工作簿
-            workbook?.Dispose(); // 彻底释放资源（NPOI推荐的释放方式）
+            // 异常兜底：任何步骤失败均返回 0，避免 App 崩溃
+            Debug.WriteLine($"❌ 读取 Excel 文件失败: {ex.Message}");
+            Debug.WriteLine($"   异常类型: {ex.GetType().Name}");
+            Debug.WriteLine($"   堆栈跟踪: {ex.StackTrace}");
+            return 0;
+        }
+        finally
+        {
+            // 关键：无论是否报错，都强制释放资源
+            workbook?.Close();
+            workbook?.Dispose();
+            fileStream?.Close();
+            fileStream?.Dispose();
         }
     }
 

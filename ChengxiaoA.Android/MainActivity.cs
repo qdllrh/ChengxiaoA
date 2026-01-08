@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Avalonia;
@@ -28,10 +28,13 @@ public class MainActivity : AvaloniaMainActivity<App>
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        System.Diagnostics.Debug.WriteLine("========== MainActivity.OnCreate ==========");
         _current = this;
         base.OnCreate(savedInstanceState);
 
         // 注册 Android 文件选择器服务
+        System.Diagnostics.Debug.WriteLine("正在注册 AndroidFilePickerService...");
         FilePickerService.Instance = new AndroidFilePickerService();
+        System.Diagnostics.Debug.WriteLine("✅ AndroidFilePickerService 注册完成");
     }
 }
