@@ -203,12 +203,18 @@ public class AndroidFilePickerService : IFilePickerService
                 var tempPath = System.IO.Path.Combine(tempDir, fileName);
                 System.Diagnostics.Debug.WriteLine($"临时文件路径: {tempPath}");
 
-                // 如果文件已存在，先删除
+                // 检查文件是否已存在
                 if (System.IO.File.Exists(tempPath))
                 {
-                    System.IO.File.Delete(tempPath);
+                    System.Diagnostics.Debug.WriteLine($"✅ 文件已存在，直接使用: {tempPath}");
+                    System.Diagnostics.Debug.WriteLine($"文件大小: {new System.IO.FileInfo(tempPath).Length} 字节");
+                    inputStream.Close();
+                    return tempPath;
                 }
 
+                System.Diagnostics.Debug.WriteLine("⚠️ 文件不存在，开始复制");
+
+                // 文件不存在，则复制文件
                 using (var outputStream = System.IO.File.Create(tempPath))
                 {
                     inputStream.CopyTo(outputStream);

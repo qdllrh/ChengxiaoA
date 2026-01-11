@@ -21,7 +21,6 @@ public partial class MainView : UserControl
     public static double total2 = 0;
     public static double Xuexivalue;
     public static double Yulevalue;
-    public static double Duoyuleji;
     public static string _selectedExcelPath = string.Empty;
     public static string _selectedExcelPath1 = string.Empty;
     public static bool IsHuanzhai = false;
@@ -216,7 +215,6 @@ public partial class MainView : UserControl
         var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
         var btnCalculate = this.FindControl<Button>("btnCalculate");
         var btnAccumulate = this.FindControl<Button>("btnAccumulate");
-        var Duoyujileibutton = this.FindControl<Button>("Duoyujileibutton");
 
         if (txtResult != null)
         {
@@ -241,11 +239,6 @@ public partial class MainView : UserControl
                     btnCalculate.IsEnabled = true;
                 if (btnAccumulate != null)
                     btnAccumulate.IsEnabled = false;
-
-                if (total > total2 && Duoyujileibutton != null)
-                {
-                    Duoyujileibutton.IsEnabled = true;
-                }
             }
             else
             {
@@ -292,7 +285,6 @@ public partial class MainView : UserControl
         var txtleijiYule = this.FindControl<TextBox>("txtleijiYule");
         var Yulebutton = this.FindControl<Button>("Yulebutton");
         var Yuleleijibutton = this.FindControl<Button>("Yuleleijibutton");
-        var Duoyujileibutton = this.FindControl<Button>("Duoyujileibutton");
 
         if (txtYule != null && txtleijiYule != null)
         {
@@ -308,11 +300,6 @@ public partial class MainView : UserControl
                     Yulebutton.IsEnabled = true;
                 if (Yuleleijibutton != null)
                     Yuleleijibutton.IsEnabled = false;
-
-                if (total > total2 && Duoyujileibutton != null)
-                {
-                    Duoyujileibutton.IsEnabled = true;
-                }
             }
             else
             {
@@ -323,39 +310,7 @@ public partial class MainView : UserControl
 
     #endregion
 
-    #region 多余积累事件
 
-    private void Duoyujilei_Click(object? sender, RoutedEventArgs e)
-    {
-        var txtDuoyuleiji = this.FindControl<TextBox>("txtDuoyuleiji");
-        var txtleijiYule = this.FindControl<TextBox>("txtleijiYule");
-        var Duoyujileibutton = this.FindControl<Button>("Duoyujileibutton");
-
-        if (total > total2)
-        {
-            Duoyuleji = Duoyuleji + (total - total2);
-
-            if (txtDuoyuleiji != null)
-                txtDuoyuleiji.Text = Duoyuleji.ToString("F2"); // 显示累计结果
-
-            if (Duoyujileibutton != null)
-                Duoyujileibutton.IsEnabled = false;
-
-            total2 = total;
-
-            if (txtleijiYule != null)
-                txtleijiYule.Text = total2.ToString("F2"); // 显示累计结果
-
-            UpdateWaterFill(total2, 2);
-            UpdateWaterColor2(total2);
-        }
-        else
-        {
-            Debug.WriteLine("学习累计不足，先累计学习");
-        }
-    }
-
-    #endregion
 
     #region 总计相关事件
 
@@ -482,7 +437,6 @@ public partial class MainView : UserControl
         try
         {
             var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
-            var txtDuoyuleiji = this.FindControl<TextBox>("txtDuoyuleiji");
 
             if (string.IsNullOrEmpty(_selectedExcelPath))
             {
@@ -491,18 +445,12 @@ public partial class MainView : UserControl
             }
 
             double.TryParse(txtXuexizongjilei?.Text, out double valueToSave);
-            valueToSave = valueToSave + Duoyuleji;
 
             SaveValueToFirstCell(_selectedExcelPath, valueToSave);
 
             if (txtXuexizongjilei != null)
                 txtXuexizongjilei.Text = $"{valueToSave}";
 
-            Duoyuleji = 0;
-            if (txtDuoyuleiji != null)
-                txtDuoyuleiji.Text = Duoyuleji.ToString("F2");
-
-            UpdateWaterFill(Duoyuleji, 1);
             Debug.WriteLine($"数值 {valueToSave} 已成功保存到A1单元格！");
         }
         catch (Exception ex)
@@ -530,8 +478,7 @@ public partial class MainView : UserControl
             var chengxiaoshuxin = new ChengxiaoShuxin
             {
                 Chengxiaoleiji = total,
-                Yuleleiji = total2,
-                Duoyuleiji = Duoyuleji
+                Yuleleiji = total2
             };
 
             // 保存到文件
@@ -560,7 +507,6 @@ public partial class MainView : UserControl
                 var gongyongShuxing1 = DataFileHandler.LoadDataFromFile<ChengxiaoShuxin>(filePath);
                 total = gongyongShuxing1.Chengxiaoleiji;
                 total2 = gongyongShuxing1.Yuleleiji;
-                Duoyuleji = gongyongShuxing1.Duoyuleiji;
                 Jiazaixiaoguo();
             }
             else
@@ -578,7 +524,6 @@ public partial class MainView : UserControl
     {
         var txtTotal = this.FindControl<TextBox>("txtTotal");
         var txtleijiYule = this.FindControl<TextBox>("txtleijiYule");
-        var txtDuoyuleiji = this.FindControl<TextBox>("txtDuoyuleiji");
         var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
 
         if (txtTotal != null)
@@ -590,9 +535,6 @@ public partial class MainView : UserControl
             txtleijiYule.Text = total2.ToString("F2");
 
         UpdateWaterFill(total2, 2);
-
-        if (txtDuoyuleiji != null)
-            txtDuoyuleiji.Text = Duoyuleji.ToString("F2");
 
         UpdateWaterFill(Zongjilei1, 1);
 
@@ -718,7 +660,7 @@ public partial class MainView : UserControl
 
         if (waterFillnumber == 1)
         {
-            // 多余累计水灌
+            // 总累计水灌
             maxValue = 63000;
             percentage = Math.Min(value / maxValue, 1.0);
 
@@ -726,7 +668,6 @@ public partial class MainView : UserControl
             {
                 height = waterContainer1.Bounds.Height * percentage;
                 waterFill1.Height = height;
-                UpdateWaterColor1(Duoyuleji);
                 UpdateWaterColor2(total2);
             }
         }
@@ -773,22 +714,7 @@ public partial class MainView : UserControl
         }
     }
 
-    // 更新水的颜色（多余累计）
-    private void UpdateWaterColor1(double value)
-    {
-        var waterFill1 = this.FindControl<Border>("waterFill1");
-        if (waterFill1 == null) return;
 
-        var topColor = Color.FromRgb(100, 255, 100);
-        var bottomColor = Color.FromRgb(0, 180, 0);
-
-        var brush = waterFill1.Background as Avalonia.Media.LinearGradientBrush;
-        if (brush != null && brush.GradientStops.Count >= 2)
-        {
-            brush.GradientStops[0].Color = topColor;
-            brush.GradientStops[1].Color = bottomColor;
-        }
-    }
 
     #endregion
 
@@ -929,11 +855,25 @@ public partial class MainView : UserControl
     // 保存数值到 Excel 第一个单元格
     private void SaveValueToFirstCell(string filePath, double valueToSave)
     {
+        Debug.WriteLine($"========== SaveValueToFirstCell 开始 ==========");
+        Debug.WriteLine($"文件路径: {filePath}");
+        Debug.WriteLine($"要保存的值: {valueToSave}");
+
         IWorkbook workbook = null;
         FileStream fileStream = null;
+        MemoryStream? memoryStream = null;
 
         try
         {
+            // 检查文件是否存在
+            if (!File.Exists(filePath))
+            {
+                Debug.WriteLine("❌ 文件不存在");
+                throw new Exception("文件不存在");
+            }
+
+            Debug.WriteLine($"文件大小: {new FileInfo(filePath).Length} 字节");
+
             // 以读写模式打开文件，保持流始终打开
             fileStream = new FileStream(
                 filePath,
@@ -942,52 +882,84 @@ public partial class MainView : UserControl
                 FileShare.None
             );
 
+            Debug.WriteLine("✅ 文件流打开成功");
+
             // 读取文件内容到内存（关键：避免.xlsx依赖外部流）
             byte[] fileContent;
-            using (var memoryStream = new MemoryStream())
+            using (var tempMemoryStream = new MemoryStream())
             {
-                fileStream.CopyTo(memoryStream);
-                fileContent = memoryStream.ToArray();
+                fileStream.CopyTo(tempMemoryStream);
+                fileContent = tempMemoryStream.ToArray();
+                Debug.WriteLine($"✅ 读取文件内容到内存: {fileContent.Length} 字节");
             }
 
-            // 从内存中创建工作簿（脱离对原文件流的依赖）
-            using (var memoryStream = new MemoryStream(fileContent))
+            // 创建内存流用于工作簿
+            memoryStream = new MemoryStream(fileContent);
+
+            // 根据文件扩展名，使用不同的类打开工作簿
+            string extension = Path.GetExtension(filePath).ToLower();
+            Debug.WriteLine($"文件扩展名: {extension}");
+
+            if (extension == ".xls")
             {
-                if (System.IO.Path.GetExtension(filePath).Equals(".xls", StringComparison.OrdinalIgnoreCase))
-                {
-                    workbook = new HSSFWorkbook(memoryStream);
-                }
-                else
-                {
-                    workbook = new XSSFWorkbook(memoryStream);
-                }
+                workbook = new HSSFWorkbook(memoryStream);
+                Debug.WriteLine("✅ HSSFWorkbook 创建成功");
+            }
+            else if (extension == ".xlsx")
+            {
+                workbook = new XSSFWorkbook(memoryStream);
+                Debug.WriteLine("✅ XSSFWorkbook 创建成功");
+            }
+            else
+            {
+                Debug.WriteLine($"❌ 不支持的文件格式: {extension}");
+                throw new Exception($"不支持的文件格式: {extension}");
             }
 
             // 获取或创建工作表、行、单元格
             ISheet sheet = workbook.GetSheetAt(0) ?? workbook.CreateSheet("Sheet1");
             IRow row = sheet.GetRow(0) ?? sheet.CreateRow(0);
             ICell cell = row.GetCell(0) ?? row.CreateCell(0);
+
+            // 设置单元格值
             cell.SetCellValue(valueToSave);
+            Debug.WriteLine($"✅ 设置单元格值: {valueToSave}");
 
-            // 写入修改后的数据
-            fileStream.Seek(0, SeekOrigin.Begin);
-            fileStream.SetLength(0); // 清空原有内容
-            workbook.Write(fileStream);
-            fileStream.Flush(); // 强制写入磁盘
+            // 写入修改后的数据到临时内存流
+            using (var outputMemoryStream = new MemoryStream())
+            {
+                workbook.Write(outputMemoryStream);
+                byte[] outputData = outputMemoryStream.ToArray();
+                Debug.WriteLine($"✅ 工作簿写入内存: {outputData.Length} 字节");
 
-            Debug.WriteLine($"成功保存数值 {valueToSave} 到 Excel 文件");
+                // 将修改后的数据写回原文件
+                fileStream.Seek(0, SeekOrigin.Begin);
+                fileStream.SetLength(0); // 清空原有内容
+                fileStream.Write(outputData, 0, outputData.Length);
+                fileStream.Flush(); // 强制写入磁盘
+                Debug.WriteLine($"✅ 数据写入文件成功");
+            }
+
+            Debug.WriteLine($"✅ 成功保存数值 {valueToSave} 到 Excel 文件");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"修改Excel内容失败：{ex.Message}");
+            Debug.WriteLine($"❌ 修改Excel内容失败：{ex.Message}");
+            Debug.WriteLine($"   异常类型: {ex.GetType().Name}");
+            Debug.WriteLine($"   堆栈跟踪: {ex.StackTrace}");
             throw new Exception($"修改Excel内容失败：{ex.Message}", ex);
         }
         finally
         {
-            // 释放资源
+            // 关键：无论是否报错，都强制释放资源
+            // 注意：workbook 必须在 memoryStream 关闭前关闭
             workbook?.Close();
+            workbook?.Dispose();
+            memoryStream?.Close();
+            memoryStream?.Dispose();
             fileStream?.Close();
             fileStream?.Dispose();
+            Debug.WriteLine("========== SaveValueToFirstCell 结束 ==========");
         }
     }
 
@@ -999,7 +971,6 @@ public class ChengxiaoShuxin
 {
     public double Chengxiaoleiji { get; set; }
     public double Yuleleiji { get; set; }
-    public double Duoyuleiji { get; set; }
 }
 
 // 文件处理类
@@ -1012,7 +983,6 @@ public static class DataFileHandler
         {
             writer.WriteLine($"Chengxiaoleiji:{(data as ChengxiaoShuxin).Chengxiaoleiji}");
             writer.WriteLine($"Yuleleiji:{(data as ChengxiaoShuxin).Yuleleiji}");
-            writer.WriteLine($"Duoyuleiji:{(data as ChengxiaoShuxin).Duoyuleiji}");
         }
     }
 
@@ -1036,8 +1006,6 @@ public static class DataFileHandler
                         data.Chengxiaoleiji = chengxiao;
                     else if (parts[0] == "Yuleleiji" && double.TryParse(parts[1], out double yule))
                         data.Yuleleiji = yule;
-                    else if (parts[0] == "Duoyuleiji" && double.TryParse(parts[1], out double duoyule))
-                        data.Duoyuleiji = duoyule;
                 }
             }
         }

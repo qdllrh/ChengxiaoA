@@ -37,83 +37,58 @@
                         <TextBox Name="txtZ" TextAlignment="Center" Height="45" FontSize="18" Background="#FFDFEADB" Watermark="输入比例"/>
                     </StackPanel>
 
+                      <!-- 计算按钮 -->
+                       <Grid ColumnDefinitions="*,*">
+                        <StackPanel Spacing="4">
+                     <Button Name="btnCalculate" Content=" 计算成效" Height="55" FontSize="18" 
+                        Click="BtnCalculate_Click" Background="#4CAF50" Foreground="White" CornerRadius="8" Grid.Column="0"/>    
+                     </StackPanel>
+                           <TextBox Name="txtResult" TextAlignment="Center" Height="45" FontSize="18"
+                                     IsReadOnly="True" Background="#F5F5F5" Watermark="计算结果"  Grid.Column="1"/>
+                           </Grid>
+
+                     <Grid ColumnDefinitions="*,*">
+                      <Button Name="btnAccumulate" Grid.Column="0" Content="➕ 成效累计" Height="50" FontSize="16"
+                            Click="BtnAccumulate_Click" Background="#66BB6A" Foreground="White" CornerRadius="8" Margin="0,0,4,0" IsEnabled="False"/>
+                                          <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="成效累计" FontSize="14" Foreground="#666" />
+                            <TextBox Name="txtTotal" TextAlignment="Center" Height="45" FontSize="18"
+                                     IsReadOnly="True" Background="#F5F5F5" Watermark="累计成效"/>
+                        </StackPanel>  
+                    </Grid>
+                    
                     <!-- 娱乐时间 -->
                     <StackPanel Spacing="4">
                         <TextBlock Text="娱乐时间" FontSize="14" Foreground="#666"/>
                         <TextBox Name="txtYleshijian" TextAlignment="Center" Height="45" FontSize="18" Background="#FFDFEADB" Watermark="输入娱乐时间"/>
                     </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- 计算按钮（放在Border里以确保中文正常显示） -->
-            <Border Background="Transparent" Padding="0">
-                <Button Name="btnCalculate" Content=" 计算成效" Height="55" FontSize="18" 
-                        Click="BtnCalculate_Click" Background="#4CAF50" Foreground="White" CornerRadius="8"/>
-            </Border>
-
-            <!-- 结果区域 -->
-            <Border Background="White" CornerRadius="8" Padding="12">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="📈 计算结果" FontSize="16"  Foreground="#666"/>
-
                     <Grid ColumnDefinitions="*,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="成效输出" FontSize="14" Foreground="#555"/>
-                            <TextBox Name="txtResult" TextAlignment="Center" Height="45" FontSize="18"
-                                     IsReadOnly="True" Background="#F5F5F5" Watermark="计算结果"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="4">
-                            <TextBlock Text="娱乐计算" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
-                            <Button Name="Yulebutton" Content="娱乐计算" Height="45" FontSize="14"
+                    <Button Name="Yulebutton" Content="娱乐计算" Height="55" FontSize="18" Grid.Column="0"
                                     Click="Yulebutton_Click" Background="#8BC34A" Foreground="White" CornerRadius="6" Margin="5,0,0,0"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <TextBox Name="txtYule" TextAlignment="Center" Height="45" FontSize="18"
+                    <TextBox Name="txtYule" TextAlignment="Center" Height="45" FontSize="18" Grid.Column="1"
                              IsReadOnly="True" Background="#F5F5F5" Watermark="娱乐结果"/>
-                </StackPanel>
-            </Border>
-
-            <!-- 累计按钮（放在Border里以确保中文正常显示） -->
-            <Border Background="Transparent" Padding="0">
-                <Grid ColumnDefinitions="*,*">
-                    <Button Name="btnAccumulate" Grid.Column="0" Content="➕ 成效累计" Height="50" FontSize="16"
-                            Click="BtnAccumulate_Click" Background="#66BB6A" Foreground="White" CornerRadius="8" Margin="0,0,4,0" IsEnabled="False"/>
-                    <Button Name="Yuleleijibutton" Grid.Column="1" Content="➕ 娱乐累计" Height="50" FontSize="16"
-                            Click="Yuleleijibutton_Click" Background="#66BB6A" Foreground="White" CornerRadius="8" Margin="4,0,0,0" IsEnabled="False"/>
-                </Grid>
-            </Border>
-
-            <!-- 累计结果 -->
-            <Border Background="White" CornerRadius="8" Padding="12">
-                <StackPanel Spacing="12">
-                    <Grid ColumnDefinitions="*,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="成效累计" FontSize="14" Foreground="#666"/>
-                            <TextBox Name="txtTotal" TextAlignment="Center" Height="45" FontSize="18"
-                                     IsReadOnly="True" Background="#F5F5F5" Watermark="累计成效"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="4">
-                            <TextBlock Text="娱乐累计" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
-                            <TextBox Name="txtleijiYule" TextAlignment="Center" Height="45" FontSize="18"
-                                     IsReadOnly="True" Background="#F5F5F5" Watermark="累计娱乐"/>
-                        </StackPanel>
                     </Grid>
-                </StackPanel>
+                    <Grid ColumnDefinitions="*,*">
+                          <Button Name="Yuleleijibutton" Grid.Column="0" Content="➕ 娱乐累计" Height="50" FontSize="16"
+                            Click="Yuleleijibutton_Click" Background="#66BB6A" Foreground="White" CornerRadius="8" Margin="4,0,0,0" IsEnabled="False"/>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="娱乐累计" FontSize="14" Foreground="#666"   />
+                            
+                        <TextBox Name="txtleijiYule" TextAlignment="Center" Height="45" FontSize="18" Grid.Column="1"
+                                     IsReadOnly="True" Background="#F5F5F5" Watermark="累计娱乐"/>
+                            </StackPanel>
+                        </Grid>
+
+                    </StackPanel>
             </Border>
 
-            <!-- 多余积累（放在Border里以确保中文正常显示） -->
-            <Border Background="Transparent" Padding="0">
-                <Button Name="Duoyujileibutton" Content="📊 多余积累计算" Height="50" FontSize="16"
-                        Click="Duoyujilei_Click" Background="#81C784" Foreground="White" CornerRadius="8"/>
-            </Border>
-            <TextBox Name="txtDuoyuleiji" TextAlignment="Center" Height="45" FontSize="18"
-                     IsReadOnly="True" Background="#F5F5F5" Watermark="多余积累结果"/>
+          
+
 
             <!-- 水灌效果 - 成效 -->
             <Border Background="White" CornerRadius="8" Padding="12">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="💧 成效水灌" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
+                    <TextBlock Text="💧 成效累计" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
                     <Grid Height="180" VerticalAlignment="Center">
                         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="200" Height="180" HorizontalAlignment="Center">
                             <Grid>
@@ -148,7 +123,7 @@
             <!-- 水灌效果 - 娱乐 -->
             <Border Background="White" CornerRadius="8" Padding="12">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="💧 娱乐水灌" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
+                    <TextBlock Text="💧 娱乐累计" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
                     <Grid Height="180" VerticalAlignment="Center">
                         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="200" Height="180" HorizontalAlignment="Center">
                             <Grid>
@@ -179,10 +154,10 @@
                 </StackPanel>
             </Border>
 
-            <!-- 水灌效果 - 多余积累 -->
+            <!-- 水灌效果 - 总积累 -->
             <Border Background="White" CornerRadius="8" Padding="12">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="💧 多余积累水灌" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
+                    <TextBlock Text="💧 总累计" FontSize="16"  Foreground="#555" HorizontalAlignment="Center"/>
                     <Grid Height="180" VerticalAlignment="Center">
                         <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="200" Height="180" HorizontalAlignment="Center">
                             <Grid>
@@ -201,10 +176,17 @@
                                     </Canvas>
                                 </Grid>
                                 <StackPanel HorizontalAlignment="Left" Margin="5,0,0,0" Spacing="30">
-                                    <TextBlock Text="520" FontSize="10" Foreground="#666"/>
-                                    <TextBlock Text="390" FontSize="10" Foreground="#666"/>
-                                    <TextBlock Text="260" FontSize="10" Foreground="#666"/>
-                                    <TextBlock Text="130" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="63000" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="47250" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="31500" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="15750" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="0" FontSize="10" Foreground="#666"/>
+                                </StackPanel>
+                                <StackPanel HorizontalAlignment="Right" Margin="5,0,0,0" Spacing="30">
+                                    <TextBlock Text="1000h" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="750h" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="500h" FontSize="10" Foreground="#666"/>
+                                    <TextBlock Text="250h" FontSize="10" Foreground="#666"/>
                                     <TextBlock Text="0" FontSize="10" Foreground="#666"/>
                                 </StackPanel>
                             </Grid>
