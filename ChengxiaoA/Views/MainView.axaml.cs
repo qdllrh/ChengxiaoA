@@ -26,6 +26,14 @@ public partial class MainView : UserControl
     public static bool IsHuanzhai = false;
     public static double Zongjilei1;
 
+    // 控件缓存（避免每次调用 FindControl，提升性能）
+    private Grid? _waterContainer;
+    private Border? _waterFill;
+    private Grid? _waterContainer1;
+    private Border? _waterFill1;
+    private Grid? _waterContainer2;
+    private Border? _waterFill2;
+
     public MainView()
     {
         InitializeComponent();
@@ -36,22 +44,19 @@ public partial class MainView : UserControl
         // 初始化水灌动画
         InitializeAnimations();
 
-        // 调试：打印字体信息
-        Debug.WriteLine("========== 字体调试信息 ==========");
-        Debug.WriteLine($"UserControl FontFamily: {this.FontFamily}");
+        // 初始化控件缓存
+        CacheWaterControls();
+    }
 
-        var titleBlock = this.FindControl<TextBlock>("titleTextBlock");
-        if (titleBlock != null)
-        {
-            Debug.WriteLine($"标题 '成效计算器' FontFamily: {titleBlock.FontFamily}");
-        }
-
-        var calculateBtn = this.FindControl<Button>("btnCalculate");
-        if (calculateBtn != null)
-        {
-            Debug.WriteLine($"按钮 '计算成效' FontFamily: {calculateBtn.FontFamily}");
-        }
-        Debug.WriteLine("=================================");
+    // 初始化水灌控件缓存
+    private void CacheWaterControls()
+    {
+        _waterContainer = this.FindControl<Grid>("waterContainer");
+        _waterFill = this.FindControl<Border>("waterFill");
+        _waterContainer1 = this.FindControl<Grid>("waterContainer1");
+        _waterFill1 = this.FindControl<Border>("waterFill1");
+        _waterContainer2 = this.FindControl<Grid>("waterContainer2");
+        _waterFill2 = this.FindControl<Border>("waterFill2");
     }
 
     #region 窗口加载和关闭事件
@@ -59,18 +64,11 @@ public partial class MainView : UserControl
     // 窗口加载事件 - 读取 Excel 文件
     private async void MainWindow_Loaded(object? sender, RoutedEventArgs e)
     {
-        Debug.WriteLine("===== MainWindow_Loaded 被调用 =====");
-
         try
         {
-            Debug.WriteLine("准备调用 PickExcelFileAsync...");
             // 调用平台特定的文件选择器
             string excelFilePath = await PickExcelFileAsync();
 
-            Debug.WriteLine($"默认 Excel 路径: {excelFilePath}");
-            //Debug.WriteLine($"文件存在: {File.Exists(excelFilePath)}");
-            Debug.WriteLine($"文件存在: {excelFilePath}");
-            //if (File.Exists(excelFilePath))
             if (!string.IsNullOrEmpty(excelFilePath))
                 {
                 var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
@@ -85,8 +83,6 @@ public partial class MainView : UserControl
                     txtXuexizongjilei.Text = $"{firstCellNumber}";
                     Zongjilei1 = firstCellNumber;
                     _selectedExcelPath1 = excelFilePath;
-
-                    Debug.WriteLine($"成功读取 Excel 文件: {excelFilePath}, 值: {firstCellNumber}");
                 }
             }
             else
@@ -97,7 +93,6 @@ public partial class MainView : UserControl
                 {
                     txtXuexizongjilei.Text = "请选择 Excel 文件";
                 }
-                Debug.WriteLine($"默认 Excel 文件不存在: {excelFilePath}");
             }
         }
         catch (Exception ex)
@@ -107,7 +102,6 @@ public partial class MainView : UserControl
             {
                 txtXuexizongjilei.Text = "读取失败，请检查文件格式";
             }
-            Debug.WriteLine($"读取失败：{ex.Message}");
         }
 //#endif
     }
@@ -119,16 +113,14 @@ public partial class MainView : UserControl
         {
             if (string.IsNullOrEmpty(_selectedExcelPath1))
             {
-                Debug.WriteLine("请先选择Excel文件！");
                 return;
             }
 
+            // 同步保存
             SaveValueToFirstCell(_selectedExcelPath1, Zongjilei1);
-            Debug.WriteLine($"总累计 {Zongjilei1} 已成功保存到A1单元格！");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"保存失败：{ex.Message}");
         }
     }
 
@@ -161,7 +153,6 @@ public partial class MainView : UserControl
                 // 确保Y不为0（避免除数为0）
                 if (y == 0)
                 {
-                    Debug.WriteLine("Y不能为0，请输入有效数值！");
                     return;
                 }
 
@@ -196,10 +187,6 @@ public partial class MainView : UserControl
                     btnCalculate.IsEnabled = false;
                 if (btnAccumulate != null)
                     btnAccumulate.IsEnabled = true;
-            }
-            else
-            {
-                Debug.WriteLine("请确保X、Y、Z输入的是有效数值！");
             }
         }
     }
@@ -240,10 +227,6 @@ public partial class MainView : UserControl
                 if (btnAccumulate != null)
                     btnAccumulate.IsEnabled = false;
             }
-            else
-            {
-                Debug.WriteLine("请先点击「计算成效」获取有效结果！");
-            }
         }
     }
 
@@ -272,10 +255,6 @@ public partial class MainView : UserControl
                 if (Yuleleijibutton != null)
                     Yuleleijibutton.IsEnabled = true;
             }
-            else
-            {
-                Debug.WriteLine("请确保娱乐时间输入的是有效数值！");
-            }
         }
     }
 
@@ -300,10 +279,6 @@ public partial class MainView : UserControl
                     Yulebutton.IsEnabled = true;
                 if (Yuleleijibutton != null)
                     Yuleleijibutton.IsEnabled = false;
-            }
-            else
-            {
-                Debug.WriteLine("请先点击「娱乐」获取有效结果！");
             }
         }
     }
@@ -330,6 +305,7 @@ public partial class MainView : UserControl
                 if (txtXuexizongjilei != null)
                     txtXuexizongjilei.Text = "正在读取文件...";
 
+                // 读取第一个单元格的数字
                 double firstCellNumber = ReadFirstCellNumber(excelFilePath);
 
                 if (txtXuexizongjilei != null)
@@ -349,15 +325,12 @@ public partial class MainView : UserControl
             {
                 txtXuexizongjilei.Text = "读取失败，请检查文件格式";
             }
-            Debug.WriteLine($"读取失败：{ex.Message}");
         }
     }
 
     // 平台特定的文件选择器
     private async Task<string> PickExcelFileAsync()
     {
-        Debug.WriteLine("========== PickExcelFileAsync (MainView) 开始 ==========");
-
         // 运行时判断平台 - 尝试多种检测方式
         bool isAndroid = false;
 
@@ -389,17 +362,13 @@ public partial class MainView : UserControl
             catch { }
         }
 
-        Debug.WriteLine($"平台检测结果: {(isAndroid ? "Android" : "非Android")}");
-
         if (isAndroid)
         {
-            Debug.WriteLine("✅ 检测到 Android 平台，调用 FilePickerService.PickExcelFileAsync()");
             // Android 平台：使用存储访问框架
             return await FilePickerService.PickExcelFileAsync();
         }
         else
         {
-            Debug.WriteLine("❌ 非 Android 平台，使用默认文件选择器");
             // 其他平台：使用存储文件对话框
             // 获取 TopLevel 对象
             var topLevel = TopLevel.GetTopLevel(this);
@@ -440,7 +409,6 @@ public partial class MainView : UserControl
 
             if (string.IsNullOrEmpty(_selectedExcelPath))
             {
-                Debug.WriteLine("请先选择Excel文件！");
                 return;
             }
 
@@ -450,12 +418,9 @@ public partial class MainView : UserControl
 
             if (txtXuexizongjilei != null)
                 txtXuexizongjilei.Text = $"{valueToSave}";
-
-            Debug.WriteLine($"数值 {valueToSave} 已成功保存到A1单元格！");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"保存失败：{ex.Message}");
         }
     }
 
@@ -483,11 +448,9 @@ public partial class MainView : UserControl
 
             // 保存到文件
             DataFileHandler.SaveDataToFile(chengxiaoshuxin, filePath);
-            Debug.WriteLine($"文件已保存到: {filePath}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"保存失败：{ex.Message}");
         }
     }
 
@@ -549,7 +512,6 @@ public partial class MainView : UserControl
     private void Mubiaodakai_Click(object? sender, RoutedEventArgs e)
     {
         // TODO: 打开目标设置窗口
-        Debug.WriteLine("打开目标设置窗口");
     }
 
     private void Shuaxin_Click(object? sender, RoutedEventArgs e)
@@ -584,19 +546,11 @@ public partial class MainView : UserControl
     {
         // TODO: 实现 Avalonia 动画
         // WPF 的 DoubleAnimation 在 Avalonia 中需要使用不同的方式
-        Debug.WriteLine("水灌动画初始化（待实现）");
     }
 
     // 更新水灌效果
     private void UpdateWaterFill(double value, int waterFillnumber)
     {
-        var waterContainer = this.FindControl<Grid>("waterContainer");
-        var waterFill = this.FindControl<Border>("waterFill");
-        var waterContainer1 = this.FindControl<Grid>("waterContainer1");
-        var waterFill1 = this.FindControl<Border>("waterFill1");
-        var waterContainer2 = this.FindControl<Grid>("waterContainer2");
-        var waterFill2 = this.FindControl<Border>("waterFill2");
-
         double maxValue;
         double percentage;
         double height;
@@ -607,18 +561,18 @@ public partial class MainView : UserControl
             maxValue = 520;
             percentage = Math.Min(value / maxValue, 1.0);
 
-            if (waterContainer != null && waterFill != null)
+            if (_waterContainer != null && _waterFill != null)
             {
-                height = waterContainer.Bounds.Height * percentage;
-                waterFill.Height = height;
+                height = _waterContainer.Bounds.Height * percentage;
+                _waterFill.Height = height;
 
                 if (IsHuanzhai && total2 >= total)
                 {
                     total2 = total2 - total;
                     total = 0;
                     percentage = Math.Min(total / maxValue, 1.0);
-                    height = waterContainer.Bounds.Height * percentage;
-                    waterFill.Height = height;
+                    height = _waterContainer.Bounds.Height * percentage;
+                    _waterFill.Height = height;
                     UpdateWaterColor(total);
                     UpdateWaterColor2(total2);
                 }
@@ -636,18 +590,18 @@ public partial class MainView : UserControl
             maxValue = 520;
             percentage = Math.Min(value / maxValue, 1.0);
 
-            if (waterContainer2 != null && waterFill2 != null)
+            if (_waterContainer2 != null && _waterFill2 != null)
             {
-                height = waterContainer2.Bounds.Height * percentage;
-                waterFill2.Height = height;
+                height = _waterContainer2.Bounds.Height * percentage;
+                _waterFill2.Height = height;
 
                 if (IsHuanzhai && total2 >= total)
                 {
                     total2 = total2 - total;
                     total = 0;
                     percentage = Math.Min(total2 / maxValue, 1.0);
-                    height = waterContainer2.Bounds.Height * percentage;
-                    waterFill2.Height = height;
+                    height = _waterContainer2.Bounds.Height * percentage;
+                    _waterFill2.Height = height;
                     UpdateWaterColor(total);
                     UpdateWaterColor2(total2);
                 }
@@ -664,10 +618,10 @@ public partial class MainView : UserControl
             maxValue = 63000;
             percentage = Math.Min(value / maxValue, 1.0);
 
-            if (waterContainer1 != null && waterFill1 != null)
+            if (_waterContainer1 != null && _waterFill1 != null)
             {
-                height = waterContainer1.Bounds.Height * percentage;
-                waterFill1.Height = height;
+                height = _waterContainer1.Bounds.Height * percentage;
+                _waterFill1.Height = height;
                 UpdateWaterColor2(total2);
             }
         }
@@ -676,8 +630,7 @@ public partial class MainView : UserControl
     // 更新水的颜色（学习累计）
     private void UpdateWaterColor(double value)
     {
-        var waterFill = this.FindControl<Border>("waterFill");
-        if (waterFill == null) return;
+        if (_waterFill == null) return;
 
         var topColor = value <= 130 ? Color.FromRgb(255, 100, 100) :
                        value <= 260 ? Color.FromRgb(100, 255, 100) :
@@ -689,7 +642,7 @@ public partial class MainView : UserControl
                           value <= 390 ? Color.FromRgb(0, 0, 255) :
                           Color.FromRgb(128, 0, 128);
 
-        var brush = waterFill.Background as Avalonia.Media.LinearGradientBrush;
+        var brush = _waterFill.Background as Avalonia.Media.LinearGradientBrush;
         if (brush != null && brush.GradientStops.Count >= 2)
         {
             brush.GradientStops[0].Color = topColor;
@@ -700,13 +653,12 @@ public partial class MainView : UserControl
     // 更新水的颜色（娱乐累计）
     private void UpdateWaterColor2(double value)
     {
-        var waterFill2 = this.FindControl<Border>("waterFill2");
-        if (waterFill2 == null) return;
+        if (_waterFill2 == null) return;
 
         var topColor = value >= total ? Color.FromRgb(255, 100, 100) : Color.FromRgb(100, 255, 100);
         var bottomColor = value >= total ? Color.FromRgb(255, 0, 0) : Color.FromRgb(0, 180, 0);
 
-        var brush = waterFill2.Background as Avalonia.Media.LinearGradientBrush;
+        var brush = _waterFill2.Background as Avalonia.Media.LinearGradientBrush;
         if (brush != null && brush.GradientStops.Count >= 2)
         {
             brush.GradientStops[0].Color = topColor;
@@ -723,9 +675,6 @@ public partial class MainView : UserControl
     // 读取 Excel 第一个单元格的数字（完全复用场景 1 的解析逻辑）
     private double ReadFirstCellNumber(string filePath)
     {
-        Debug.WriteLine($"========== ReadFirstCellNumber 开始 ==========");
-        Debug.WriteLine($"文件路径: {filePath}");
-
         IWorkbook workbook = null;
         FileStream? fileStream = null;
 
@@ -734,14 +683,12 @@ public partial class MainView : UserControl
             // 检查文件是否存在
             if (!File.Exists(filePath))
             {
-                Debug.WriteLine("❌ 文件不存在");
                 return 0;
             }
 
             // 根据文件扩展名，使用不同的类打开工作簿
             fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             string extension = Path.GetExtension(filePath).ToLower();
-            Debug.WriteLine($"文件扩展名: {extension}");
 
             if (extension == ".xls")
             {
@@ -753,21 +700,16 @@ public partial class MainView : UserControl
             }
             else
             {
-                Debug.WriteLine($"❌ 不支持的文件格式: {extension}");
                 return 0;
             }
 
-            Debug.WriteLine("✅ 工作簿创建成功");
-
             // 获取第一个工作表
             ISheet sheet = workbook.GetSheetAt(0);
-            Debug.WriteLine($"✅ 获取工作表: {sheet.SheetName}");
 
             // 获取第一行，如果第一行不存在则返回0
             IRow row = sheet.GetRow(0);
             if (row == null)
             {
-                Debug.WriteLine("⚠️ 第一行不存在");
                 return 0;
             }
 
@@ -775,11 +717,8 @@ public partial class MainView : UserControl
             ICell cell = row.GetCell(0);
             if (cell == null)
             {
-                Debug.WriteLine("⚠️ 第一个单元格不存在");
                 return 0;
             }
-
-            Debug.WriteLine($"单元格类型: {cell.CellType}");
 
             // 根据单元格类型获取值
             double value = 0;
@@ -787,14 +726,12 @@ public partial class MainView : UserControl
             {
                 case CellType.Numeric:
                     value = cell.NumericCellValue;
-                    Debug.WriteLine($"✅ 读取到数值: {value}");
                     break;
                 case CellType.String:
                     // 尝试将字符串转换为数字
                     if (double.TryParse(cell.StringCellValue, out double num))
                     {
                         value = num;
-                        Debug.WriteLine($"✅ 读取到字符串数值: {value}");
                     }
                     else
                     {
@@ -806,14 +743,12 @@ public partial class MainView : UserControl
                     if (cell.CachedFormulaResultType == CellType.Numeric)
                     {
                         value = cell.NumericCellValue;
-                        Debug.WriteLine($"✅ 读取到公式数值: {value}");
                     }
                     else if (cell.CachedFormulaResultType == CellType.String)
                     {
                         if (double.TryParse(cell.StringCellValue, out double num2))
                         {
                             value = num2;
-                            Debug.WriteLine($"✅ 读取到公式字符串数值: {value}");
                         }
                         else
                         {
@@ -826,7 +761,6 @@ public partial class MainView : UserControl
                     }
                     break;
                 case CellType.Blank:
-                    Debug.WriteLine("⚠️ 第一个单元格为空");
                     return 0;
                 default:
                     throw new Exception($"第一个单元格类型不支持: {cell.CellType}");
@@ -837,9 +771,6 @@ public partial class MainView : UserControl
         catch (Exception ex)
         {
             // 异常兜底：任何步骤失败均返回 0，避免 App 崩溃
-            Debug.WriteLine($"❌ 读取 Excel 文件失败: {ex.Message}");
-            Debug.WriteLine($"   异常类型: {ex.GetType().Name}");
-            Debug.WriteLine($"   堆栈跟踪: {ex.StackTrace}");
             return 0;
         }
         finally
@@ -855,10 +786,6 @@ public partial class MainView : UserControl
     // 保存数值到 Excel 第一个单元格
     private void SaveValueToFirstCell(string filePath, double valueToSave)
     {
-        Debug.WriteLine($"========== SaveValueToFirstCell 开始 ==========");
-        Debug.WriteLine($"文件路径: {filePath}");
-        Debug.WriteLine($"要保存的值: {valueToSave}");
-
         IWorkbook workbook = null;
         FileStream fileStream = null;
         MemoryStream? memoryStream = null;
@@ -868,11 +795,8 @@ public partial class MainView : UserControl
             // 检查文件是否存在
             if (!File.Exists(filePath))
             {
-                Debug.WriteLine("❌ 文件不存在");
                 throw new Exception("文件不存在");
             }
-
-            Debug.WriteLine($"文件大小: {new FileInfo(filePath).Length} 字节");
 
             // 以读写模式打开文件，保持流始终打开
             fileStream = new FileStream(
@@ -882,15 +806,12 @@ public partial class MainView : UserControl
                 FileShare.None
             );
 
-            Debug.WriteLine("✅ 文件流打开成功");
-
             // 读取文件内容到内存（关键：避免.xlsx依赖外部流）
             byte[] fileContent;
             using (var tempMemoryStream = new MemoryStream())
             {
                 fileStream.CopyTo(tempMemoryStream);
                 fileContent = tempMemoryStream.ToArray();
-                Debug.WriteLine($"✅ 读取文件内容到内存: {fileContent.Length} 字节");
             }
 
             // 创建内存流用于工作簿
@@ -898,21 +819,17 @@ public partial class MainView : UserControl
 
             // 根据文件扩展名，使用不同的类打开工作簿
             string extension = Path.GetExtension(filePath).ToLower();
-            Debug.WriteLine($"文件扩展名: {extension}");
 
             if (extension == ".xls")
             {
                 workbook = new HSSFWorkbook(memoryStream);
-                Debug.WriteLine("✅ HSSFWorkbook 创建成功");
             }
             else if (extension == ".xlsx")
             {
                 workbook = new XSSFWorkbook(memoryStream);
-                Debug.WriteLine("✅ XSSFWorkbook 创建成功");
             }
             else
             {
-                Debug.WriteLine($"❌ 不支持的文件格式: {extension}");
                 throw new Exception($"不支持的文件格式: {extension}");
             }
 
@@ -923,30 +840,22 @@ public partial class MainView : UserControl
 
             // 设置单元格值
             cell.SetCellValue(valueToSave);
-            Debug.WriteLine($"✅ 设置单元格值: {valueToSave}");
 
             // 写入修改后的数据到临时内存流
             using (var outputMemoryStream = new MemoryStream())
             {
                 workbook.Write(outputMemoryStream);
                 byte[] outputData = outputMemoryStream.ToArray();
-                Debug.WriteLine($"✅ 工作簿写入内存: {outputData.Length} 字节");
 
                 // 将修改后的数据写回原文件
                 fileStream.Seek(0, SeekOrigin.Begin);
                 fileStream.SetLength(0); // 清空原有内容
                 fileStream.Write(outputData, 0, outputData.Length);
                 fileStream.Flush(); // 强制写入磁盘
-                Debug.WriteLine($"✅ 数据写入文件成功");
             }
-
-            Debug.WriteLine($"✅ 成功保存数值 {valueToSave} 到 Excel 文件");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ 修改Excel内容失败：{ex.Message}");
-            Debug.WriteLine($"   异常类型: {ex.GetType().Name}");
-            Debug.WriteLine($"   堆栈跟踪: {ex.StackTrace}");
             throw new Exception($"修改Excel内容失败：{ex.Message}", ex);
         }
         finally
@@ -959,7 +868,6 @@ public partial class MainView : UserControl
             memoryStream?.Dispose();
             fileStream?.Close();
             fileStream?.Dispose();
-            Debug.WriteLine("========== SaveValueToFirstCell 结束 ==========");
         }
     }
 

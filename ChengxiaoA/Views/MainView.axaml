@@ -200,9 +200,9 @@
                 <StackPanel Spacing="8">
                     <TextBlock Text="📚 学习总累计" FontSize="16"  Foreground="#555"/>
                     <Grid ColumnDefinitions="*,2*">
-                        <Button Name="Zongjilei" Grid.Column="0" Content="打开" Height="45" FontSize="14"
+                        <Button Name="Zongjilei" Grid.Column="0" Content="打开总累计" Height="45" FontSize="14"
                                 Click="Zongjilei_Click" Background="#90A4AE" Foreground="White" CornerRadius="6" Margin="0,0,4,0"/>
-                        <Button Name="ZongjileiJisuan_" Grid.Column="1" Content="累计计算" Height="45" FontSize="14"
+                        <Button Name="ZongjileiJisuan_" Grid.Column="1" Content="总累计保存" Height="45" FontSize="14"
                                 Click="ZongjileiJisuan_Click" Background="#78909C" Foreground="White" CornerRadius="6" Margin="4,0,0,0"/>
                     </Grid>
                     <TextBox Name="txtXuexizongjilei" TextAlignment="Center" Height="45" FontSize="18"
