@@ -6,6 +6,7 @@ using ChengxiaoA.Services;
 using System;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using NPOI.SS.UserModel;
@@ -25,6 +26,7 @@ public partial class MainView : UserControl
     public static string _selectedExcelPath1 = string.Empty;
     public static bool IsHuanzhai = false;
     public static double Zongjilei1;
+    public static double Duoyuleji = 0;
 
     // 控件缓存（避免每次调用 FindControl，提升性能）
     private Grid? _waterContainer;
@@ -430,56 +432,126 @@ public partial class MainView : UserControl
 
     private async void Baocun_Click(object? sender, RoutedEventArgs e)
     {
-        // TODO: 在 Android 上实现文件保存对话框
-        // 暂时保存到默认路径
-        string filePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "chengxiao_data.dat"
-        );
+        // 获取 TopLevel 对象
+        var topLevel = TopLevel.GetTopLevel(this);
+        var storageProvider = topLevel?.StorageProvider;
 
-        try
+        if (storageProvider == null)
         {
-            // 创建数据对象
-            var chengxiaoshuxin = new ChengxiaoShuxin
-            {
-                Chengxiaoleiji = total,
-                Yuleleiji = total2
-            };
-
-            // 保存到文件
-            DataFileHandler.SaveDataToFile(chengxiaoshuxin, filePath);
+            Debug.WriteLine("无法获取存储提供程序");
+            return;
         }
-        catch (Exception ex)
+
+        // 显示保存文件对话框
+        var file = await storageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
         {
+            Title = "保存",
+            DefaultExtension = "dat",
+            SuggestedFileName = "chengxiao_data.dat",
+            FileTypeChoices = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("DAT文件")
+                {
+                    Patterns = new[] { "*.dat" }
+                },
+                new Avalonia.Platform.Storage.FilePickerFileType("所有文件")
+                {
+                    Patterns = new[] { "*.*" }
+                }
+            }
+        });
+
+        // 如果用户点击了"保存"
+        if (file != null)
+        {
+            try
+            {
+                // 获取用户指定的文件路径
+                string filePath = file.Path.AbsolutePath;
+                
+                Debug.WriteLine($"=== Baocun_Click 开始 ===");
+                Debug.WriteLine($"文件对象: {file}");
+                Debug.WriteLine($"文件路径 (AbsolutePath): {filePath}");
+                Debug.WriteLine($"文件路径 (OriginalString): {file.Path.OriginalString}");
+                Debug.WriteLine($"文件路径 (LocalPath): {file.Path.LocalPath}");
+                Debug.WriteLine($"文件 URI: {file.Path}");
+
+                // 创建数据对象
+                ChengxiaoShuxin chengxiaoshuxin = new ChengxiaoShuxin
+                {
+                    Chengxiaoleiji = total,
+                    Yuleleiji = total2,
+                    Duoyuleiji = Duoyuleji
+                };
+
+                Debug.WriteLine($"准备保存的数据: Chengxiaoleiji={chengxiaoshuxin.Chengxiaoleiji}, Yuleleiji={chengxiaoshuxin.Yuleleiji}, Duoyuleiji={chengxiaoshuxin.Duoyuleiji}");
+
+                // 保存到文件
+                DataFileHandler.SaveDataToFile(chengxiaoshuxin, filePath);
+
+                Debug.WriteLine($"文件已保存到: {filePath}");
+                Debug.WriteLine($"=== Baocun_Click 结束 ===");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"保存失败: {ex.Message}");
+                Debug.WriteLine($"异常类型: {ex.GetType().Name}");
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
         }
     }
 
-    private void Jiazai_Click(object? sender, RoutedEventArgs e)
+    private async void Jiazai_Click(object? sender, RoutedEventArgs e)
     {
-        // TODO: 在 Android 上实现文件选择对话框
-        // 暂时从默认路径加载
-        string filePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "chengxiao_data.dat"
-        );
+        // 获取 TopLevel 对象
+        var topLevel = TopLevel.GetTopLevel(this);
+        var storageProvider = topLevel?.StorageProvider;
 
-        try
+        if (storageProvider == null)
         {
-            if (File.Exists(filePath))
+            Debug.WriteLine("无法获取存储提供程序");
+            return;
+        }
+
+        // 显示打开文件对话框
+        var files = await storageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = "打开",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
             {
-                var gongyongShuxing1 = DataFileHandler.LoadDataFromFile<ChengxiaoShuxin>(filePath);
+                new Avalonia.Platform.Storage.FilePickerFileType("DAT文件")
+                {
+                    Patterns = new[] { "*.dat" }
+                },
+                new Avalonia.Platform.Storage.FilePickerFileType("所有文件")
+                {
+                    Patterns = new[] { "*.*" }
+                }
+            }
+        });
+
+        // 如果用户点击了"打开"
+        if (files.Count > 0)
+        {
+            try
+            {
+                // 获取选择的文件路径
+                string filePath = files[0].Path.AbsolutePath;
+
+                // 加载数据
+                ChengxiaoShuxin gongyongShuxing1 = DataFileHandler.LoadDataFromFile<ChengxiaoShuxin>(filePath);
                 total = gongyongShuxing1.Chengxiaoleiji;
                 total2 = gongyongShuxing1.Yuleleiji;
+                Duoyuleji = gongyongShuxing1.Duoyuleiji;
                 Jiazaixiaoguo();
+
+                Debug.WriteLine($"文件已加载: {filePath}");
             }
-            else
+            catch (Exception ex)
             {
-                Debug.WriteLine("文件不存在");
+                Debug.WriteLine($"加载失败: {ex.Message}");
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"加载失败：{ex.Message}");
         }
     }
 
@@ -879,6 +951,7 @@ public class ChengxiaoShuxin
 {
     public double Chengxiaoleiji { get; set; }
     public double Yuleleiji { get; set; }
+    public double Duoyuleiji { get; set; }
 }
 
 // 文件处理类
@@ -886,11 +959,107 @@ public static class DataFileHandler
 {
     public static void SaveDataToFile<T>(T data, string filePath)
     {
-        // TODO: 实现数据保存功能
-        using (var writer = new StreamWriter(filePath))
+        // 检测是否是 URI 格式（Android 返回的路径格式）
+        bool isUriFormat = filePath.StartsWith("/document/") || (filePath.Contains(":") && !filePath.Contains("\\") && !filePath.Contains("/"));
+
+        if (isUriFormat)
         {
-            writer.WriteLine($"Chengxiaoleiji:{(data as ChengxiaoShuxin).Chengxiaoleiji}");
-            writer.WriteLine($"Yuleleiji:{(data as ChengxiaoShuxin).Yuleleiji}");
+            // 是 URI 格式，使用 JSON 格式，并通过反射调用 Android 专用的处理器
+            var chengxiaoshuxin = data as ChengxiaoShuxin;
+            
+            Debug.WriteLine($"检测到 URI 格式，准备保存: {filePath}");
+            Debug.WriteLine($"chengxiaoshuxin 是否为 null: {chengxiaoshuxin == null}");
+            if (chengxiaoshuxin != null)
+            {
+                Debug.WriteLine($"Chengxiaoleiji={chengxiaoshuxin.Chengxiaoleiji}, Yuleleiji={chengxiaoshuxin.Yuleleiji}, Duoyuleiji={chengxiaoshuxin.Duoyuleiji}");
+            }
+            
+            // 调用 Android 专用的处理器
+            try
+            {
+                // 列出所有程序集，查找类型
+                Debug.WriteLine("开始查找 AndroidDataFileHandler 类型...");
+                
+                var handlerType = System.Type.GetType("ChengxiaoA.Android.Services.AndroidDataFileHandler, ChengxiaoA.Android");
+                
+                if (handlerType == null)
+                {
+                    Debug.WriteLine("尝试使用简单类型名查找...");
+                    handlerType = System.Type.GetType("ChengxiaoA.Android.Services.AndroidDataFileHandler");
+                }
+                
+                if (handlerType == null)
+                {
+                    Debug.WriteLine("尝试从所有程序集中查找...");
+                    foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        Debug.WriteLine($"检查程序集: {assembly.GetName().Name}");
+                        if (assembly.GetName().Name?.Contains("ChengxiaoA.Android") == true)
+                        {
+                            Debug.WriteLine($"  找到匹配的程序集");
+                            handlerType = assembly.GetType("ChengxiaoA.Android.Services.AndroidDataFileHandler");
+                            if (handlerType != null)
+                            {
+                                Debug.WriteLine($"  找到类型!");
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (handlerType != null)
+                {
+                    Debug.WriteLine($"成功找到 AndroidDataFileHandler 类型: {handlerType.FullName}");
+                    Debug.WriteLine($"类型程序集: {handlerType.Assembly.GetName().Name}");
+                    
+                    var saveMethod = handlerType.GetMethod("SaveDataToFile", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (saveMethod != null)
+                    {
+                        Debug.WriteLine($"找到 SaveDataToFile 方法，参数: {string.Join(", ", saveMethod.GetParameters().Select(p => p.ParameterType.Name))}");
+                        Debug.WriteLine("调用 AndroidDataFileHandler.SaveDataToFile");
+                        saveMethod.Invoke(null, new object[] { chengxiaoshuxin, filePath });
+                        Debug.WriteLine("保存完成");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("未找到 SaveDataToFile 方法");
+                        // 列出所有方法
+                        Debug.WriteLine("可用方法:");
+                        foreach (var method in handlerType.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static))
+                        {
+                            Debug.WriteLine($"  - {method.Name}");
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("未找到 AndroidDataFileHandler 类型");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Android 保存失败: {ex.Message}");
+                Debug.WriteLine($"异常类型: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"内部异常: {ex.InnerException.Message}");
+                    Debug.WriteLine($"内部异常类型: {ex.InnerException.GetType().Name}");
+                    Debug.WriteLine($"内部异常堆栈: {ex.InnerException.StackTrace}");
+                }
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
+            }
+        }
+        else
+        {
+            // 其他平台：使用文本格式
+            Debug.WriteLine($"使用普通文件路径: {filePath}");
+            using (var writer = new StreamWriter(filePath))
+            {
+                var chengxiaoshuxin = data as ChengxiaoShuxin;
+                writer.WriteLine($"Chengxiaoleiji:{chengxiaoshuxin?.Chengxiaoleiji}");
+                writer.WriteLine($"Yuleleiji:{chengxiaoshuxin?.Yuleleiji}");
+                writer.WriteLine($"Duoyuleiji:{chengxiaoshuxin?.Duoyuleiji}");
+            }
         }
     }
 
@@ -901,19 +1070,82 @@ public static class DataFileHandler
 
         if (data == null) return result;
 
-        // TODO: 实现数据加载功能
-        using (var reader = new StreamReader(filePath))
+        // 检测是否是 URI 格式（Android 返回的路径格式）
+        bool isUriFormat = filePath.StartsWith("/document/") || (filePath.Contains(":") && !filePath.Contains("\\") && !filePath.Contains("/"));
+
+        if (isUriFormat)
         {
-            string line;
-            while ((line = reader.ReadLine()) != null)
+            // 是 URI 格式，使用 JSON 格式，并通过反射调用 Android 专用的处理器
+            Debug.WriteLine($"检测到 URI 格式，准备加载: {filePath}");
+            
+            try
             {
-                var parts = line.Split(':');
-                if (parts.Length == 2)
+                var handlerType = System.Type.GetType("ChengxiaoA.Android.Services.AndroidDataFileHandler, ChengxiaoA.Android");
+                if (handlerType != null)
                 {
-                    if (parts[0] == "Chengxiaoleiji" && double.TryParse(parts[1], out double chengxiao))
-                        data.Chengxiaoleiji = chengxiao;
-                    else if (parts[0] == "Yuleleiji" && double.TryParse(parts[1], out double yule))
-                        data.Yuleleiji = yule;
+                    Debug.WriteLine("成功找到 AndroidDataFileHandler 类型");
+                    var loadMethod = handlerType.GetMethod("LoadDataFromFile", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    if (loadMethod != null)
+                    {
+                        Debug.WriteLine("调用 AndroidDataFileHandler.LoadDataFromFile");
+                        var loadedData = loadMethod.Invoke(null, new object[] { filePath });
+
+                        // 手动复制属性（避免类型转换问题）
+                        if (loadedData != null)
+                        {
+                            var loadedProps = loadedData.GetType().GetProperties();
+                            foreach (var prop in loadedProps)
+                            {
+                                var targetProp = data.GetType().GetProperty(prop.Name);
+                                if (targetProp != null && targetProp.CanWrite)
+                                {
+                                    var value = prop.GetValue(loadedData);
+                                    targetProp.SetValue(data, value);
+                                    Debug.WriteLine($"复制属性 {prop.Name} = {value}");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine("未找到 LoadDataFromFile 方法");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("未找到 AndroidDataFileHandler 类型");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Android 加载失败: {ex.Message}");
+                Debug.WriteLine($"异常类型: {ex.GetType().Name}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"内部异常: {ex.InnerException.Message}");
+                    Debug.WriteLine($"内部异常类型: {ex.InnerException.GetType().Name}");
+                }
+            }
+        }
+        else
+        {
+            // 其他平台：使用文本格式
+            Debug.WriteLine($"使用普通文件路径: {filePath}");
+            using (var reader = new StreamReader(filePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var parts = line.Split(':');
+                    if (parts.Length == 2)
+                    {
+                        if (parts[0] == "Chengxiaoleiji" && double.TryParse(parts[1], out double chengxiao))
+                            data.Chengxiaoleiji = chengxiao;
+                        else if (parts[0] == "Yuleleiji" && double.TryParse(parts[1], out double yule))
+                            data.Yuleleiji = yule;
+                        else if (parts[0] == "Duoyuleiji" && double.TryParse(parts[1], out double duoyule))
+                            data.Duoyuleiji = duoyule;
+                    }
                 }
             }
         }
