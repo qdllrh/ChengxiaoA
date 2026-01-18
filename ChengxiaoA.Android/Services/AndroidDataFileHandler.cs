@@ -38,13 +38,31 @@ public static class AndroidDataFileHandler
             Debug.WriteLine($"[AndroidDataFileHandler] 数据: Chengxiaoleiji={chengxiaoValue}, Yuleleiji={yuleValue}, Duoyuleiji={duoyuValue}");
 
             // 检查是否是 URI 格式
-            if (filePathOrUri.StartsWith("/document/") || filePathOrUri.Contains(":"))
+            if (filePathOrUri.StartsWith("/document/") || filePathOrUri.Contains("content://"))
             {
                 // 是 URI 格式，通过 ContentResolver 写入
                 AndroidUri uri;
                 try
                 {
-                    uri = AndroidUri.Parse(filePathOrUri);
+                    // 检查是否是完整 URI
+                    if (filePathOrUri.StartsWith("content://"))
+                    {
+                        // 已经是完整的 content:// URI，直接使用
+                        uri = AndroidUri.Parse(filePathOrUri);
+                        Debug.WriteLine($"[AndroidDataFileHandler] 使用完整 URI: {uri}");
+                    }
+                    else if (filePathOrUri.StartsWith("/document/"))
+                    {
+                        // 是简化的路径，尝试使用文档提供者
+                        // 注意：这种格式可能不完整，优先使用 content:// 格式
+                        uri = AndroidUri.Parse($"content://com.android.providers.documents.documents{filePathOrUri}");
+                        Debug.WriteLine($"[AndroidDataFileHandler] 转换 URI: {filePathOrUri} -> {uri}");
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"不支持的 URI 格式: {filePathOrUri}");
+                    }
+                    
                     Debug.WriteLine($"[AndroidDataFileHandler] 解析 URI 成功: {uri}");
                 }
                 catch (Exception ex)
@@ -71,22 +89,40 @@ public static class AndroidDataFileHandler
                 System.IO.Stream? outputStream = null;
                 try
                 {
+                    Debug.WriteLine($"[AndroidDataFileHandler] 尝试打开输出流...");
                     outputStream = contentResolver.OpenOutputStream(uri);
+                    
                     if (outputStream != null)
                     {
-                        using var writer = new StreamWriter(outputStream);
-                        writer.Write(json);
-                        writer.Flush();
-                        Debug.WriteLine("[AndroidDataFileHandler] 写入成功");
+                        Debug.WriteLine($"[AndroidDataFileHandler] 输出流打开成功");
+                        
+                        // 转换为字节数组写入（避免编码问题）
+                        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+                        outputStream.Write(bytes, 0, bytes.Length);
+                        outputStream.Flush();
+                        
+                        Debug.WriteLine($"[AndroidDataFileHandler] 写入 {bytes.Length} 字节成功");
                     }
                     else
                     {
                         throw new InvalidOperationException($"无法打开输出流: {uri}");
                     }
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[AndroidDataFileHandler] 写入失败: {ex.Message}");
+                    Debug.WriteLine($"[AndroidDataFileHandler] 异常类型: {ex.GetType().Name}");
+                    Debug.WriteLine($"[AndroidDataFileHandler] 异常堆栈: {ex.StackTrace}");
+                    throw;
+                }
                 finally
                 {
-                    outputStream?.Close();
+                    try
+                    {
+                        outputStream?.Flush();
+                        outputStream?.Close();
+                    }
+                    catch { }
                     outputStream?.Dispose();
                 }
             }
@@ -128,13 +164,28 @@ public static class AndroidDataFileHandler
             string json;
 
             // 检查是否是 URI 格式
-            if (filePathOrUri.StartsWith("/document/") || filePathOrUri.Contains(":"))
+            if (filePathOrUri.StartsWith("/document/") || filePathOrUri.Contains("content://"))
             {
                 // 是 URI 格式，通过 ContentResolver 读取
                 AndroidUri uri;
                 try
                 {
-                    uri = AndroidUri.Parse(filePathOrUri);
+                    // 检查是否是完整 URI
+                    if (filePathOrUri.StartsWith("content://"))
+                    {
+                        uri = AndroidUri.Parse(filePathOrUri);
+                    }
+                    else if (filePathOrUri.StartsWith("/document/"))
+                    {
+                        // 转换为完整的 content:// URI
+                        uri = AndroidUri.Parse($"content://com.android.providers.documents.documents{filePathOrUri}");
+                        Debug.WriteLine($"[AndroidDataFileHandler] 转换 URI: {filePathOrUri} -> {uri}");
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"不支持的 URI 格式: {filePathOrUri}");
+                    }
+                    
                     Debug.WriteLine($"[AndroidDataFileHandler] 解析 URI 成功: {uri}");
                 }
                 catch (Exception ex)
@@ -150,11 +201,20 @@ public static class AndroidDataFileHandler
                 System.IO.Stream? inputStream = null;
                 try
                 {
+                    Debug.WriteLine($"[AndroidDataFileHandler] 尝试打开输入流...");
                     inputStream = contentResolver.OpenInputStream(uri);
+                    
                     if (inputStream != null)
                     {
-                        using var reader = new StreamReader(inputStream);
-                        json = reader.ReadToEnd();
+                        Debug.WriteLine($"[AndroidDataFileHandler] 输入流打开成功");
+                        
+                        // 使用字节读取
+                        using var memoryStream = new MemoryStream();
+                        inputStream.CopyTo(memoryStream);
+                        var bytes = memoryStream.ToArray();
+                        json = System.Text.Encoding.UTF8.GetString(bytes);
+                        
+                        Debug.WriteLine($"[AndroidDataFileHandler] 读取 {bytes.Length} 字节");
                         Debug.WriteLine($"[AndroidDataFileHandler] 读取到的 JSON: {json}");
                     }
                     else
@@ -162,9 +222,20 @@ public static class AndroidDataFileHandler
                         throw new FileNotFoundException($"无法打开文件: {filePathOrUri}");
                     }
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[AndroidDataFileHandler] 读取失败: {ex.Message}");
+                    Debug.WriteLine($"[AndroidDataFileHandler] 异常类型: {ex.GetType().Name}");
+                    Debug.WriteLine($"[AndroidDataFileHandler] 异常堆栈: {ex.StackTrace}");
+                    throw;
+                }
                 finally
                 {
-                    inputStream?.Close();
+                    try
+                    {
+                        inputStream?.Close();
+                    }
+                    catch { }
                     inputStream?.Dispose();
                 }
             }

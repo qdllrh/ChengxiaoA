@@ -467,12 +467,14 @@ public partial class MainView : UserControl
             try
             {
                 // 获取用户指定的文件路径
-                string filePath = file.Path.AbsolutePath;
+                // 在 Android 上，OriginalString 包含完整的 content:// URI
+                // AbsolutePath 只包含 /document/xx 这样的简化路径
+                string filePath = file.Path.OriginalString;
                 
                 Debug.WriteLine($"=== Baocun_Click 开始 ===");
                 Debug.WriteLine($"文件对象: {file}");
-                Debug.WriteLine($"文件路径 (AbsolutePath): {filePath}");
-                Debug.WriteLine($"文件路径 (OriginalString): {file.Path.OriginalString}");
+                Debug.WriteLine($"文件路径 (AbsolutePath): {file.Path.AbsolutePath}");
+                Debug.WriteLine($"文件路径 (OriginalString): {filePath}");
                 Debug.WriteLine($"文件路径 (LocalPath): {file.Path.LocalPath}");
                 Debug.WriteLine($"文件 URI: {file.Path}");
 
@@ -537,7 +539,8 @@ public partial class MainView : UserControl
             try
             {
                 // 获取选择的文件路径
-                string filePath = files[0].Path.AbsolutePath;
+                // 在 Android 上，OriginalString 包含完整的 content:// URI
+                string filePath = files[0].Path.OriginalString;
 
                 // 加载数据
                 ChengxiaoShuxin gongyongShuxing1 = DataFileHandler.LoadDataFromFile<ChengxiaoShuxin>(filePath);
@@ -960,7 +963,9 @@ public static class DataFileHandler
     public static void SaveDataToFile<T>(T data, string filePath)
     {
         // 检测是否是 URI 格式（Android 返回的路径格式）
-        bool isUriFormat = filePath.StartsWith("/document/") || (filePath.Contains(":") && !filePath.Contains("\\") && !filePath.Contains("/"));
+        // content:// 开头的 URI（完整 URI）
+        // /document/ 开头的简化 URI
+        bool isUriFormat = filePath.StartsWith("content://") || filePath.StartsWith("/document/");
 
         if (isUriFormat)
         {
@@ -1071,7 +1076,9 @@ public static class DataFileHandler
         if (data == null) return result;
 
         // 检测是否是 URI 格式（Android 返回的路径格式）
-        bool isUriFormat = filePath.StartsWith("/document/") || (filePath.Contains(":") && !filePath.Contains("\\") && !filePath.Contains("/"));
+        // content:// 开头的 URI（完整 URI）
+        // /document/ 开头的简化 URI
+        bool isUriFormat = filePath.StartsWith("content://") || filePath.StartsWith("/document/");
 
         if (isUriFormat)
         {
@@ -1124,7 +1131,9 @@ public static class DataFileHandler
                 {
                     Debug.WriteLine($"内部异常: {ex.InnerException.Message}");
                     Debug.WriteLine($"内部异常类型: {ex.InnerException.GetType().Name}");
+                    Debug.WriteLine($"内部异常堆栈: {ex.InnerException.StackTrace}");
                 }
+                Debug.WriteLine($"异常堆栈: {ex.StackTrace}");
             }
         }
         else
