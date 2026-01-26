@@ -22,21 +22,10 @@ public static class AndroidDataFileHandler
             throw new InvalidOperationException("无法获取 MainActivity 实例");
 
         Debug.WriteLine($"[AndroidDataFileHandler] SaveDataToFile 开始, path: {filePathOrUri}");
+        Debug.WriteLine($"[AndroidDataFileHandler] 数据类型: {data.GetType().Name}");
 
         try
         {
-            // 获取数据属性值
-            var dataType = data.GetType();
-            var chengxiaoProperty = dataType.GetProperty("Chengxiaoleiji");
-            var yuleProperty = dataType.GetProperty("Yuleleiji");
-            var duoyuProperty = dataType.GetProperty("Duoyuleiji");
-
-            var chengxiaoValue = chengxiaoProperty?.GetValue(data) ?? 0.0;
-            var yuleValue = yuleProperty?.GetValue(data) ?? 0.0;
-            var duoyuValue = duoyuProperty?.GetValue(data) ?? 0.0;
-
-            Debug.WriteLine($"[AndroidDataFileHandler] 数据: Chengxiaoleiji={chengxiaoValue}, Yuleleiji={yuleValue}, Duoyuleiji={duoyuValue}");
-
             // 检查是否是 URI 格式
             if (filePathOrUri.StartsWith("/document/") || filePathOrUri.Contains("content://"))
             {
@@ -75,14 +64,8 @@ public static class AndroidDataFileHandler
 
                 Debug.WriteLine($"[AndroidDataFileHandler] 使用 ContentResolver 写入");
 
-                // 创建 JSON 字符串
-                var jsonData = new
-                {
-                    Chengxiaoleiji = Convert.ToDouble(chengxiaoValue),
-                    Yuleleiji = Convert.ToDouble(yuleValue),
-                    Duoyuleiji = Convert.ToDouble(duoyuValue)
-                };
-                var json = JsonSerializer.Serialize(jsonData);
+                // 直接使用 JSON 序列化整个对象
+                var json = JsonSerializer.Serialize(data);
                 Debug.WriteLine($"[AndroidDataFileHandler] JSON: {json}");
 
                 // 使用 ContentResolver 写入
@@ -129,13 +112,7 @@ public static class AndroidDataFileHandler
             else
             {
                 // 是普通文件路径，直接写入
-                var jsonData = new
-                {
-                    Chengxiaoleiji = Convert.ToDouble(chengxiaoValue),
-                    Yuleleiji = Convert.ToDouble(yuleValue),
-                    Duoyuleiji = Convert.ToDouble(duoyuValue)
-                };
-                var json = JsonSerializer.Serialize(jsonData);
+                var json = JsonSerializer.Serialize(data);
                 File.WriteAllText(filePathOrUri, json);
                 Debug.WriteLine("[AndroidDataFileHandler] 文件写入成功");
             }
@@ -246,18 +223,28 @@ public static class AndroidDataFileHandler
                 Debug.WriteLine($"[AndroidDataFileHandler] 读取到的 JSON: {json}");
             }
 
-            // 解析 JSON
+            // 解析 JSON 为 Dictionary
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            var chengxiaoValue = root.TryGetProperty("Chengxiaoleiji", out var chengxiaoElement) ? chengxiaoElement.GetDouble() : 0.0;
-            var yuleValue = root.TryGetProperty("Yuleleiji", out var yuleElement) ? yuleElement.GetDouble() : 0.0;
-            var duoyuValue = root.TryGetProperty("Duoyuleiji", out var duoyuElement) ? duoyuElement.GetDouble() : 0.0;
+            // 将 JSON 转换为 Dictionary
+            var dict = new System.Collections.Generic.Dictionary<string, object>();
+            foreach (var prop in root.EnumerateObject())
+            {
+                if (prop.Value.ValueKind == JsonValueKind.Number)
+                {
+                    dict[prop.Name] = prop.Value.GetDouble();
+                }
+                else if (prop.Value.ValueKind == JsonValueKind.String)
+                {
+                    dict[prop.Name] = prop.Value.GetString();
+                }
+            }
 
-            Debug.WriteLine($"[AndroidDataFileHandler] 解析数据: Chengxiaoleiji={chengxiaoValue}, Yuleleiji={yuleValue}, Duoyuleiji={duoyuValue}");
+            Debug.WriteLine($"[AndroidDataFileHandler] 解析数据: {string.Join(", ", dict.Keys)}");
 
-            // 创建匿名对象返回
-            return new { Chengxiaoleiji = chengxiaoValue, Yuleleiji = yuleValue, Duoyuleiji = duoyuValue };
+            // 返回字典
+            return dict;
         }
         catch (Exception ex)
         {

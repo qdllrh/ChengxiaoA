@@ -2,7 +2,9 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
 using ChengxiaoA.Services;
+using ChengxiaoA.Models;
 using System;
 using System.IO;
 using System.Diagnostics;
@@ -35,6 +37,13 @@ public partial class MainView : UserControl
     private Border? _waterFill1;
     private Grid? _waterContainer2;
     private Border? _waterFill2;
+
+    // 目标设定相关
+    private static MubaioShuxin? _mubiaoshuxin = null;
+    private static double _mubiaoDangqian = 0;
+    private static double _mubiaoYutime = 0;
+    private static double _waveOffsetZimubiao = 0;
+    private static bool _isWaveAnimatingZimubiao = false;
 
     public MainView()
     {
@@ -586,7 +595,321 @@ public partial class MainView : UserControl
 
     private void Mubiaodakai_Click(object? sender, RoutedEventArgs e)
     {
-        // TODO: 打开目标设置窗口
+        // 显示目标设定面板
+        var mubiaoPanel = this.FindControl<Border>("MubiaoPanel");
+        if (mubiaoPanel != null)
+        {
+            mubiaoPanel.IsVisible = true;
+        }
+    }
+
+    // 目标设定：打开
+    private async void MubiaoOpen_Click(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        var storageProvider = topLevel?.StorageProvider;
+
+        if (storageProvider == null) return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "打开",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("DAT文件") { Patterns = new[] { "*.dat" } },
+                new FilePickerFileType("所有文件") { Patterns = new[] { "*.*" } }
+            }
+        });
+
+        if (files.Count > 0)
+        {
+            try
+            {
+                _mubiaoshuxin = DataFileHandler.LoadDataFromFile<MubaioShuxin>(files[0].Path.OriginalString);
+                ShowZimubiaoPanel();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"加载失败: {ex.Message}");
+            }
+        }
+    }
+
+    // 目标设定：新设置
+    private void MubiaoNew_Click(object? sender, RoutedEventArgs e)
+    {
+        // 清空输入框
+        var nameBox = this.FindControl<TextBox>("MubiaoNameTextBox");
+        var timeBox = this.FindControl<TextBox>("MubiaoTimeTextBox");
+        var biliBox = this.FindControl<TextBox>("MubiaoBiliTextBox");
+
+        if (nameBox != null) nameBox.Clear();
+        if (timeBox != null) timeBox.Clear();
+        if (biliBox != null) biliBox.Clear();
+    }
+
+    // 目标设定：确定
+    private async void MubiaoOK_Click(object? sender, RoutedEventArgs e)
+    {
+        var nameBox = this.FindControl<TextBox>("MubiaoNameTextBox");
+        var timeBox = this.FindControl<TextBox>("MubiaoTimeTextBox");
+        var biliBox = this.FindControl<TextBox>("MubiaoBiliTextBox");
+
+        if (nameBox == null || timeBox == null || biliBox == null) return;
+
+        if (_mubiaoshuxin == null)
+        {
+            _mubiaoshuxin = new MubaioShuxin();
+        }
+
+        _mubiaoshuxin.Name = nameBox.Text ?? string.Empty;
+        _mubiaoshuxin.Time = timeBox.Text ?? string.Empty;
+        _mubiaoshuxin.Dangqianchengxiao = 0;
+
+        if (double.TryParse(biliBox.Text, out double bili))
+        {
+            _mubiaoshuxin.Bili = bili;
+        }
+
+        if (double.TryParse(timeBox.Text, out double timeHours))
+        {
+            _mubiaoshuxin.Mubiaochengxiao = _mubiaoshuxin.Bili * 10.5 * timeHours * 6;
+        }
+
+        // 保存文件
+        var topLevel = TopLevel.GetTopLevel(this);
+        var storageProvider = topLevel?.StorageProvider;
+
+        if (storageProvider != null)
+        {
+            var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "保存",
+                DefaultExtension = "dat",
+                SuggestedFileName = _mubiaoshuxin.Name,
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("DAT文件") { Patterns = new[] { "*.dat" } },
+                    new FilePickerFileType("所有文件") { Patterns = new[] { "*.*" } }
+                }
+            });
+
+            if (file != null)
+            {
+                try
+                {
+                    DataFileHandler.SaveDataToFile(_mubiaoshuxin, file.Path.OriginalString);
+                    HideMubiaoPanel();
+                    ShowZimubiaoPanel();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"保存失败: {ex.Message}");
+                }
+            }
+        }
+    }
+
+    // 目标设定：取消
+    private void MubiaoCancel_Click(object? sender, RoutedEventArgs e)
+    {
+        HideMubiaoPanel();
+    }
+
+    // 显示目标面板
+    private void ShowZimubiaoPanel()
+    {
+        if (_mubiaoshuxin == null) return;
+
+        // 隐藏目标设定面板
+        HideMubiaoPanel();
+
+        // 显示目标面板并填充数据
+        var zimubiaoPanel = this.FindControl<Border>("ZimubiaoPanel");
+        var nameBox = this.FindControl<TextBox>("ZimubiaoName");
+        var yujiTime = this.FindControl<TextBox>("ZimubiaoYujiTime");
+        var yujiCX = this.FindControl<TextBox>("ZimubiaoYujiCX");
+        var dangqianCX = this.FindControl<TextBox>("ZimubiaoDangqianCX");
+
+        if (zimubiaoPanel != null) zimubiaoPanel.IsVisible = true;
+        if (nameBox != null) nameBox.Text = _mubiaoshuxin.Name;
+        if (yujiTime != null) yujiTime.Text = _mubiaoshuxin.Time;
+        if (yujiCX != null) yujiCX.Text = _mubiaoshuxin.Mubiaochengxiao.ToString();
+        if (dangqianCX != null) dangqianCX.Text = _mubiaoshuxin.Dangqianchengxiao.ToString();
+
+        _mubiaoDangqian = _mubiaoshuxin.Dangqianchengxiao;
+        UpdateZimubiaoWaterFill();
+        StartZimubiaoWaveAnimation();
+    }
+
+    // 隐藏目标设定面板
+    private void HideMubiaoPanel()
+    {
+        var mubiaoPanel = this.FindControl<Border>("MubiaoPanel");
+        if (mubiaoPanel != null) mubiaoPanel.IsVisible = false;
+    }
+
+    // 隐藏目标显示面板
+    private void HideZimubiaoPanel()
+    {
+        var zimubiaoPanel = this.FindControl<Border>("ZimubiaoPanel");
+        if (zimubiaoPanel != null) zimubiaoPanel.IsVisible = false;
+        _isWaveAnimatingZimubiao = false;
+    }
+
+    // 目标：娱乐计算
+    private void ZimubiaoYule_Click(object? sender, RoutedEventArgs e)
+    {
+        var yuleTimeBox = this.FindControl<TextBox>("ZimubiaoYuleTime");
+        if (yuleTimeBox == null) return;
+
+        if (double.TryParse(yuleTimeBox.Text, out double yuleTime))
+        {
+            _mubiaoYutime = yuleTime;
+            total2 = total2 + _mubiaoYutime;
+            UpdateWaterFill(total2, 2);
+            yuleTimeBox.Clear();
+        }
+    }
+
+    // 目标：学习计算
+    private void ZimubiaoJisuan_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_mubiaoshuxin == null) return;
+
+        var xuexiTimeBox = this.FindControl<TextBox>("ZimubiaoXuexiTime");
+        var danciCXBox = this.FindControl<TextBox>("ZimubiaoDanciCX");
+        var leijiButton = this.FindControl<Button>("ZimubiaoLeijiButton");
+
+        if (xuexiTimeBox == null || danciCXBox == null || leijiButton == null) return;
+
+        if (double.TryParse(xuexiTimeBox.Text, out double xuexiMinutes))
+        {
+            var xuexiChengxiao = xuexiMinutes * 10.5 / 10 * _mubiaoshuxin.Bili;
+            danciCXBox.Text = xuexiChengxiao.ToString("F2");
+            leijiButton.IsEnabled = true;
+            xuexiTimeBox.Clear();
+        }
+    }
+
+    // 目标：累计
+    private void ZimubiaoLeiji_Click(object? sender, RoutedEventArgs e)
+    {
+        var danciCXBox = this.FindControl<TextBox>("ZimubiaoDanciCX");
+        var dangqianCXBox = this.FindControl<TextBox>("ZimubiaoDangqianCX");
+        var leijiButton = this.FindControl<Button>("ZimubiaoLeijiButton");
+        var jisuanButton = this.FindControl<Button>("ZimubiaoJisuanButton");
+
+        if (danciCXBox == null || dangqianCXBox == null || leijiButton == null || jisuanButton == null) return;
+
+        if (double.TryParse(danciCXBox.Text, out double danciChengxiao))
+        {
+            _mubiaoDangqian = _mubiaoDangqian + danciChengxiao;
+            dangqianCXBox.Text = _mubiaoDangqian.ToString();
+            total = total + danciChengxiao;
+            UpdateZimubiaoWaterFill();
+            leijiButton.IsEnabled = false;
+            jisuanButton.IsEnabled = true;
+            Zongjilei1 = Zongjilei1 + danciChengxiao;
+        }
+    }
+
+    // 目标：保存
+    private async void ZimubiaoSave_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_mubiaoshuxin == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(this);
+        var storageProvider = topLevel?.StorageProvider;
+
+        if (storageProvider == null) return;
+
+        var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "保存",
+            DefaultExtension = "dat",
+            SuggestedFileName = _mubiaoshuxin.Name,
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("DAT文件") { Patterns = new[] { "*.dat" } },
+                new FilePickerFileType("所有文件") { Patterns = new[] { "*.*" } }
+            }
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                _mubiaoshuxin.Dangqianchengxiao = _mubiaoDangqian;
+                DataFileHandler.SaveDataToFile(_mubiaoshuxin, file.Path.OriginalString);
+                Debug.WriteLine($"目标文件已保存到: {file.Path.OriginalString}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"保存失败: {ex.Message}");
+            }
+        }
+    }
+
+    // 更新目标水灌效果
+    private void UpdateZimubiaoWaterFill()
+    {
+        if (_mubiaoshuxin == null) return;
+
+        double maxValue = _mubiaoshuxin.Mubiaochengxiao;
+        if (maxValue <= 0) maxValue = 1;
+
+        double percentage = Math.Min(_mubiaoDangqian / maxValue, 1.0);
+        var waterContainer = this.FindControl<Grid>("waterContainerZimubiao");
+        var waterFill = this.FindControl<Border>("waterFillZimubiao");
+
+        if (waterContainer != null && waterFill != null)
+        {
+            double height = waterContainer.Bounds.Height * percentage;
+            waterFill.Height = height;
+            UpdateZimubiaoWaterColor();
+        }
+
+        Debug.WriteLine($"目标水灌更新: {_mubiaoDangqian}/{maxValue} = {percentage:P0}");
+    }
+
+    private void UpdateZimubiaoWaterColor()
+    {
+        var waterFill = this.FindControl<Border>("waterFillZimubiao");
+        if (waterFill?.Background is LinearGradientBrush brush)
+        {
+            brush.GradientStops[0].Color = Color.FromArgb(255, 100, 255, 100);
+            brush.GradientStops[1].Color = Color.FromArgb(255, 0, 180, 0);
+        }
+    }
+
+    // 目标水灌波纹动画
+    private void StartZimubiaoWaveAnimation()
+    {
+        if (_isWaveAnimatingZimubiao) return;
+        _isWaveAnimatingZimubiao = true;
+
+        Task.Run(async () =>
+        {
+            while (_isWaveAnimatingZimubiao)
+            {
+                _waveOffsetZimubiao -= 1;
+                if (_waveOffsetZimubiao <= -60) _waveOffsetZimubiao = 0;
+
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    var waveCanvas = this.FindControl<Canvas>("waveCanvasZimubiao");
+                    if (waveCanvas != null)
+                    {
+                        var transform = new TranslateTransform(_waveOffsetZimubiao, 0);
+                        waveCanvas.RenderTransform = transform;
+                    }
+                });
+
+                await Task.Delay(50);
+            }
+        });
     }
 
     private void Shuaxin_Click(object? sender, RoutedEventArgs e)

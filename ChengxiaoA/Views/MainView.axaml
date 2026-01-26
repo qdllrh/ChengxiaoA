@@ -231,6 +231,135 @@
                 </StackPanel>
             </Border>
 
+            <!-- 目标设定区 -->
+            <Border Name="MubiaoPanel" Background="White" CornerRadius="8" Padding="12" IsVisible="False">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="🎯 目标设定" FontSize="16" Foreground="#555"/>
+
+                    <!-- 目标名 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="目标名" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="MubiaoNameTextBox" TextAlignment="Center" Height="40" FontSize="16" Background="#FFDFEADB" Watermark="输入目标名"/>
+                    </StackPanel>
+
+                    <!-- 目标达到时间 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="目标达到时间（小时）" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="MubiaoTimeTextBox" TextAlignment="Center" Height="40" FontSize="16" Background="#FFDFEADB" Watermark="输入小时数"/>
+                    </StackPanel>
+
+                    <!-- 比例 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="比例" FontSize="14" Foreground="#666"/>
+                        <TextBox Name="MubiaoBiliTextBox" TextAlignment="Center" Height="40" FontSize="16" Background="#FFDFEADB" Watermark="输入比例"/>
+                    </StackPanel>
+
+                    <!-- 操作按钮 -->
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <Button Name="MubiaoOpenButton" Grid.Column="0" Content="打开" Height="40" FontSize="14"
+                                Click="MubiaoOpen_Click" Background="#81C784" Foreground="White" CornerRadius="6" Margin="0,0,4,0"/>
+                        <Button Name="MubiaoNewButton" Grid.Column="1" Content="新设置" Height="40" FontSize="14"
+                                Click="MubiaoNew_Click" Background="#66BB6A" Foreground="White" CornerRadius="6" Margin="2,0,2,0"/>
+                        <Button Name="MubiaoOKButton" Grid.Column="2" Content="确定" Height="40" FontSize="14"
+                                Click="MubiaoOK_Click" Background="#4CAF50" Foreground="White" CornerRadius="6" Margin="2,0,2,0"/>
+                        <Button Name="MubiaoCancelButton" Grid.Column="3" Content="取消" Height="40" FontSize="14"
+                                Click="MubiaoCancel_Click" Background="#EF5350" Foreground="White" CornerRadius="6" Margin="4,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 目标显示区 -->
+            <Border Name="ZimubiaoPanel" Background="White" CornerRadius="8" Padding="12" IsVisible="False">
+                <StackPanel Spacing="8">
+                    <TextBlock Name="ZimubiaoTitle" Text="🎯 目标显示" FontSize="16" Foreground="#555"/>
+                    <TextBox Name="ZimubiaoName" TextAlignment="Center" Height="35" FontSize="16"
+                             IsReadOnly="True" Background="#F5F5F5"/>
+
+                    <!-- 目标信息 -->
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="目标预计时间" FontSize="12" Foreground="#666"/>
+                            <TextBox Name="ZimubiaoYujiTime" TextAlignment="Center" Height="35" FontSize="14"
+                                     IsReadOnly="True" Background="#806D6D" Foreground="White"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="目标预计成效" FontSize="12" Foreground="#666"/>
+                            <TextBox Name="ZimubiaoYujiCX" TextAlignment="Center" Height="35" FontSize="14"
+                                     IsReadOnly="True" Background="#806D6D" Foreground="White"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 娱乐和学习时间 -->
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="娱乐时间（小时）" FontSize="12" Foreground="#666"/>
+                            <Grid>
+                                <TextBox Name="ZimubiaoYuleTime" TextAlignment="Center" Height="35" FontSize="14" Background="#D2CCCC"/>
+                                <Button Name="ZimubiaoYuleButton" Content="娱乐" HorizontalAlignment="Right" Margin="0,0,5,0"
+                                        Click="ZimubiaoYule_Click" Height="35" Width="50" CornerRadius="4"/>
+                            </Grid>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="学习时间（分钟）" FontSize="12" Foreground="#666"/>
+                            <Grid>
+                                <TextBox Name="ZimubiaoXuexiTime" TextAlignment="Center" Height="35" FontSize="14" Background="#D2CCCC"/>
+                                <Button Name="ZimubiaoJisuanButton" Content="计算" HorizontalAlignment="Right" Margin="0,0,5,0"
+                                        Click="ZimubiaoJisuan_Click" Height="35" Width="50" CornerRadius="4"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 单次成效 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="单次成效" FontSize="12" Foreground="#666"/>
+                        <Grid>
+                            <TextBox Name="ZimubiaoDanciCX" TextAlignment="Center" Height="35" FontSize="14"
+                                     IsReadOnly="True" Background="#806D6D" Foreground="White"/>
+                            <Button Name="ZimubiaoLeijiButton" Content="累计" HorizontalAlignment="Right" Margin="0,0,5,0"
+                                    Click="ZimubiaoLeiji_Click" Height="25" Width="50" CornerRadius="4" IsEnabled="False"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- 当前进度 -->
+                    <Grid ColumnDefinitions="*,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="当前成效累计" FontSize="12" Foreground="#666"/>
+                            <TextBox Name="ZimubiaoDangqianCX" TextAlignment="Center" Height="35" FontSize="14"
+                                     IsReadOnly="True" Background="#806D6D" Foreground="White"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <Button Name="ZimubiaoSaveButton" Content="💾 保存目标" Height="35" FontSize="14" Margin="35,17,0,0"
+                                    Click="ZimubiaoSave_Click" Background="#4CAF50" Foreground="White" CornerRadius="8"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 水灌效果图 -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="目标进度" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
+                        <Grid Height="150" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Background="LightGray" Width="180" Height="150">
+                                <Grid>
+                                    <Grid Name="waterContainerZimubiao" Height="150" VerticalAlignment="Bottom" ClipToBounds="True">
+                                        <Border Name="waterFillZimubiao" Height="0" VerticalAlignment="Bottom" CornerRadius="5,5,0,0">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="#64FF64" Offset="0"/>
+                                                    <GradientStop Color="#00B400" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                        <Canvas Name="waveCanvasZimubiao" Height="10" VerticalAlignment="Bottom">
+                                            <Path Name="wavePathZimubiao" Fill="White" Opacity="0.3"
+                                                  Data="M0,10 C20,0 40,10 60,0 C80,10 100,0 120,10 C140,0 160,10 180,0 C200,10 220,0 240,10 L240,20 L0,20 L0,10"/>
+                                        </Canvas>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- 底部留白 -->
             <Border Height="20"/>
 
