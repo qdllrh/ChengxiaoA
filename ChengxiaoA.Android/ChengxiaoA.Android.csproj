@@ -10,6 +10,13 @@
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <Platforms>AnyCPU;x86</Platforms>
+
+    <!-- 签名配置 -->
+    <AndroidKeyStore>True</AndroidKeyStore>
+    <AndroidSigningKeyStore>chengxiao.keystore</AndroidSigningKeyStore>
+    <AndroidSigningKeyAlias>chengxiao</AndroidSigningKeyAlias>
+    <AndroidSigningKeyPass>chengxiao123</AndroidSigningKeyPass>
+    <AndroidSigningStorePass>chengxiao123</AndroidSigningStorePass>
   </PropertyGroup>
 
   <ItemGroup>
