@@ -29,6 +29,8 @@ public partial class MainView : UserControl
     public static bool IsHuanzhai = false;
     public static double Zongjilei1;
     public static double Duoyuleji = 0;
+    // 注入 Excel 读取服务（只依赖接口，不依赖 Android 实现）
+    private readonly IExcelReaderService _excelReaderService;
 
     // 控件缓存（避免每次调用 FindControl，提升性能）
     private Grid? _waterContainer;
@@ -57,8 +59,10 @@ public partial class MainView : UserControl
 
         // 初始化控件缓存
         CacheWaterControls();
+
     }
 
+   
     // 初始化水灌控件缓存
     private void CacheWaterControls()
     {
@@ -88,7 +92,75 @@ public partial class MainView : UserControl
                     txtXuexizongjilei.Text = "正在读取文件...";
 
                     // 读取第一个单元格的数字
-                    double firstCellNumber = ReadFirstCellNumber(excelFilePath);
+                    double firstCellNumber;
+
+                    // 运行时检测是否在 Android 平台（使用多种检测方法）
+                    bool isAndroid = false;
+
+                    // 方法1: 检测 RuntimeIdentifier（最可靠）
+                    string runtimeId = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier ?? "";
+                    isAndroid = runtimeId.Contains("android", StringComparison.OrdinalIgnoreCase);
+
+                    Debug.WriteLine($"=== 平台检测 ===");
+                    Debug.WriteLine($"运行时信息: {runtimeId}");
+                    Debug.WriteLine($"isAndroid (基于 RuntimeIdentifier): {isAndroid}");
+                    Debug.WriteLine($"操作系统: {System.Environment.OSVersion}");
+
+                    if (isAndroid)
+                    {
+                        // Android 平台：使用服务容器（通过反射避免编译时依赖）
+                        Debug.WriteLine("检测到 Android 平台，尝试获取服务容器...");
+
+                        // 尝试从已加载的程序集中查找类型
+                        Type? containerType = null;
+
+                        // 注意：AndroidServiceContainer 是 AndroidExcelReaderService 的嵌套类
+                        // 正确的类型名应该是：ChengxiaoA.Android.Services.AndroidExcelReaderService+AndroidServiceContainer
+                        const string fullTypeName = "ChengxiaoA.Android.Services.AndroidExcelReaderService+AndroidServiceContainer";
+
+                        // 尝试遍历所有程序集
+                        foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                        {
+                            if (assembly.GetName().Name?.Contains("ChengxiaoA.Android", StringComparison.OrdinalIgnoreCase) == true)
+                            {
+                                Debug.WriteLine($"找到 Android 程序集: {assembly.GetName().Name}");
+                                containerType = assembly.GetType(fullTypeName);
+                                if (containerType != null)
+                                {
+                                    Debug.WriteLine($"  找到类型: {containerType.FullName}");
+                                    break;
+                                }
+                            }
+                        }
+
+                        Debug.WriteLine($"containerType: {containerType?.FullName ?? "null"}");
+                        if (containerType != null)
+                        {
+                            var serviceProperty = containerType.GetProperty("ExcelReaderService", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                            Debug.WriteLine($"serviceProperty: {serviceProperty?.Name ?? "null"}");
+                            var reader = serviceProperty?.GetValue(null) as IExcelReaderService;
+                            Debug.WriteLine($"reader: {reader?.GetType().Name ?? "null"}");
+                            if (reader != null)
+                            {
+                                firstCellNumber = reader.ReadFirstCellNumber(excelFilePath);
+                            }
+                            else
+                            {
+                                Debug.WriteLine("reader 为空，使用本地方法");
+                                firstCellNumber = ReadFirstCellNumber(excelFilePath);
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("服务容器类型为空，使用本地方法");
+                            firstCellNumber = ReadFirstCellNumber(excelFilePath);
+                        }
+                    }
+                    else
+                    {
+                        // 其他平台：直接使用本地方法
+                        firstCellNumber = ReadFirstCellNumber(excelFilePath);
+                    }
 
                     // 显示结果
                     txtXuexizongjilei.Text = $"{firstCellNumber}";
@@ -1078,6 +1150,7 @@ public partial class MainView : UserControl
 
         try
         {
+            
             // 检查文件是否存在
             if (!File.Exists(filePath))
             {

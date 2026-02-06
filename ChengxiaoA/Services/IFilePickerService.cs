@@ -20,3 +20,8 @@ public interface IFilePickerService
     /// <returns>文件路径，如果取消则返回空字符串</returns>
     Task<string> SaveFileAsync(string defaultFileName);
 }
+public interface IFileHandler
+{
+    // 核心修改：返回类型从 int 改为 double
+    double ReadExcelFromUri(string filePath);
+}
