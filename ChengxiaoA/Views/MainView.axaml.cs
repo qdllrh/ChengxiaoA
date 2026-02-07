@@ -186,7 +186,7 @@ public partial class MainView : UserControl
                 txtXuexizongjilei.Text = "读取失败，请检查文件格式";
             }
         }
-//#endif
+
     }
 
     // 窗口关闭事件 - 保存到 Excel
@@ -484,26 +484,133 @@ public partial class MainView : UserControl
         }
     }
 
-    private void ZongjileiJisuan_Click(object? sender, RoutedEventArgs e)
+    private async void ZongjileiJisuan_Click(object? sender, RoutedEventArgs e)
     {
+        //try
+        //{
+        //    var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
+
+        //    if (string.IsNullOrEmpty(_selectedExcelPath))
+        //    {
+        //        return;
+        //    }
+
+        //    double.TryParse(txtXuexizongjilei?.Text, out double valueToSave);
+
+        //    SaveValueToFirstCell(_selectedExcelPath, valueToSave);
+
+        //    if (txtXuexizongjilei != null)
+        //        txtXuexizongjilei.Text = $"{valueToSave}";
+        //}
+        //catch (Exception ex)
+        //{
+        //}
         try
         {
-            var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
+            // 调用平台特定的文件选择器
+            string excelFilePath = await PickExcelFileAsync();
 
-            if (string.IsNullOrEmpty(_selectedExcelPath))
+            if (!string.IsNullOrEmpty(excelFilePath))
             {
-                return;
+                var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
+                if (txtXuexizongjilei != null)
+                {
+                    
+
+                    // 读取第一个单元格的数字
+                    double firstCellNumber=double.Parse(txtXuexizongjilei.Text);
+
+                    // 运行时检测是否在 Android 平台（使用多种检测方法）
+                    bool isAndroid = false;
+
+                    // 方法1: 检测 RuntimeIdentifier（最可靠）
+                    string runtimeId = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier ?? "";
+                    isAndroid = runtimeId.Contains("android", StringComparison.OrdinalIgnoreCase);
+
+                    Debug.WriteLine($"=== 平台检测 ===");
+                    Debug.WriteLine($"运行时信息: {runtimeId}");
+                    Debug.WriteLine($"isAndroid (基于 RuntimeIdentifier): {isAndroid}");
+                    Debug.WriteLine($"操作系统: {System.Environment.OSVersion}");
+
+                    if (isAndroid)
+                    {
+                        // Android 平台：使用服务容器（通过反射避免编译时依赖）
+                        Debug.WriteLine("检测到 Android 平台，尝试获取服务容器...");
+
+                        // 尝试从已加载的程序集中查找类型
+                        Type? containerType = null;
+
+                        // 注意：AndroidServiceContainer 是 AndroidExcelReaderService 的嵌套类
+                        // 正确的类型名应该是：ChengxiaoA.Android.Services.AndroidExcelReaderService+AndroidServiceContainer
+                        const string fullTypeName = "ChengxiaoA.Android.Services.AndroidExcelReaderService+AndroidServiceContainer";
+
+                        // 尝试遍历所有程序集
+                        foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                        {
+                            if (assembly.GetName().Name?.Contains("ChengxiaoA.Android", StringComparison.OrdinalIgnoreCase) == true)
+                            {
+                                Debug.WriteLine($"找到 Android 程序集: {assembly.GetName().Name}");
+                                containerType = assembly.GetType(fullTypeName);
+                                if (containerType != null)
+                                {
+                                    Debug.WriteLine($"  找到类型: {containerType.FullName}");
+                                    break;
+                                }
+                            }
+                        }
+
+                        Debug.WriteLine($"containerType: {containerType?.FullName ?? "null"}");
+                        if (containerType != null)
+                        {
+                            var serviceProperty = containerType.GetProperty("ExcelReaderService", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                            Debug.WriteLine($"serviceProperty: {serviceProperty?.Name ?? "null"}");
+                            var reader = serviceProperty?.GetValue(null) as IExcelReaderService;
+                            Debug.WriteLine($"reader: {reader?.GetType().Name ?? "null"}");
+                            if (reader != null)
+                            {
+                                 reader.WriteFirstCellNumber(excelFilePath, firstCellNumber);
+                            }
+                            else
+                            {
+                                Debug.WriteLine("reader 为空，使用本地方法");
+                                SaveValueToFirstCell(excelFilePath, firstCellNumber);
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("服务容器类型为空，使用本地方法");
+                            SaveValueToFirstCell(excelFilePath, firstCellNumber);
+                        }
+                    }
+                    else
+                    {
+                        // 其他平台：直接使用本地方法
+                        SaveValueToFirstCell(excelFilePath, firstCellNumber);
+                    }
+
+                    // 显示结果
+                    txtXuexizongjilei.Text = $"{firstCellNumber}";
+                    Zongjilei1 = firstCellNumber;
+                    _selectedExcelPath1 = excelFilePath;
+                }
             }
-
-            double.TryParse(txtXuexizongjilei?.Text, out double valueToSave);
-
-            SaveValueToFirstCell(_selectedExcelPath, valueToSave);
-
-            if (txtXuexizongjilei != null)
-                txtXuexizongjilei.Text = $"{valueToSave}";
+            else
+            {
+                // 文件不存在，显示提示
+                var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
+                if (txtXuexizongjilei != null)
+                {
+                    txtXuexizongjilei.Text = "请选择 Excel 文件";
+                }
+            }
         }
         catch (Exception ex)
         {
+            var txtXuexizongjilei = this.FindControl<TextBox>("txtXuexizongjilei");
+            if (txtXuexizongjilei != null)
+            {
+                txtXuexizongjilei.Text = "写入取失败，请检查文件格式";
+            }
         }
     }
 
